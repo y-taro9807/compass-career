@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:'Noto Sans JP',sans-serif;background:#f5f5f4;color:#2c2b28;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  button{font-family:inherit}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;flex-direction:column;background:#f5f5f4">
+
+  <!-- top bar -->
+  <div style="height:52px;background:#141413;display:flex;align-items:center;padding:0 24px;gap:11px;flex:none">
+    <span style="width:13px;height:13px;border:1.5px solid #fff;border-radius:99px;display:inline-block;position:relative"></span>
+    <span style="color:#fff;font-size:13px;letter-spacing:.24em;font-weight:500">COMPASS</span>
+    <span style="color:#525048;font-size:11px;letter-spacing:.05em">キャリアプラン</span>
+  </div>
+
+  <main style="flex:1">
+
+  <!-- ================= PHASE 1 : WELCOME ================= -->
+  <sc-if value="{{ isWelcome }}" hint-placeholder-val="{{ true }}">
+    <div style="max-width:560px;margin:0 auto;padding:56px 24px 72px">
+      <div style="display:flex;gap:9px;margin-bottom:40px">
+        <span style="width:7px;height:7px;border-radius:99px;background:#141413"></span>
+        <span style="width:7px;height:7px;border-radius:99px;background:#fff;border:0.5px solid #c9c7c2"></span>
+        <span style="width:7px;height:7px;border-radius:99px;background:#fff;border:0.5px solid #c9c7c2"></span>
+        <span style="width:7px;height:7px;border-radius:99px;background:#fff;border:0.5px solid #c9c7c2"></span>
+      </div>
+      <div style="font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.16em;color:#8f8d88;margin-bottom:14px">STEP 1 ／ キャリアタイプ診断</div>
+      <h1 style="font-size:30px;line-height:1.45;font-weight:700;color:#141413;margin:0 0 16px;text-wrap:pretty">5分で、あなたの<br>キャリアタイプを診断</h1>
+      <p style="font-size:14px;line-height:1.9;color:#525048;margin:0 0 28px;text-wrap:pretty">4つの質問に答えるだけ。あなたの強みのかたちを見極め、目標に向けた最適なロードマップを提案します。</p>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);margin:0 0 36px;border:0.5px solid #e8e7e4;border-radius:4px;overflow:hidden;background:#fff">
+        <div style="padding:18px 16px;text-align:center;border-right:0.5px solid #e8e7e4">
+          <div style="font-family:'Roboto Mono',monospace;font-size:11px;color:#b87333;margin-bottom:9px">01</div>
+          <div style="font-size:12.5px;font-weight:700;color:#141413;margin-bottom:5px">4問に答える</div>
+          <div style="font-size:11px;color:#8f8d88;line-height:1.65">やりがい・ビジョン・<br>学習スタイル</div>
+        </div>
+        <div style="padding:18px 16px;text-align:center;border-right:0.5px solid #e8e7e4">
+          <div style="font-family:'Roboto Mono',monospace;font-size:11px;color:#b87333;margin-bottom:9px">02</div>
+          <div style="font-size:12.5px;font-weight:700;color:#141413;margin-bottom:5px">タイプ判定</div>
+          <div style="font-size:11px;color:#8f8d88;line-height:1.65">5分類から<br>あなたの型を特定</div>
+        </div>
+        <div style="padding:18px 16px;text-align:center">
+          <div style="font-family:'Roboto Mono',monospace;font-size:11px;color:#b87333;margin-bottom:9px">03</div>
+          <div style="font-size:12.5px;font-weight:700;color:#141413;margin-bottom:5px">ロードマップ</div>
+          <div style="font-size:11px;color:#8f8d88;line-height:1.65">目標への<br>最適ルートを提案</div>
+        </div>
+      </div>
+
+      <div style="font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.14em;color:#8f8d88;margin-bottom:14px">診断タイプ ／ 5 TYPES</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:40px">
+        <sc-for list="{{ chips }}" as="c" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:16px;padding:13px 18px;background:#fff;border:0.5px solid #e8e7e4;border-radius:3px">
+            <span style="font-family:'Roboto Mono',monospace;font-size:18px;font-weight:700;color:#141413;flex:none;width:22px;text-align:center;line-height:1">{{ c.shape }}</span>
+            <div style="flex:1">
+              <div style="font-size:14px;font-weight:700;color:#2c2b28">{{ c.name }}</div>
+              <div style="font-size:11px;color:#8f8d88;margin-top:2px">{{ c.desc }}</div>
+            </div>
+            <span style="font-size:11px;color:#c9c7c2;white-space:nowrap">{{ c.tag }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <button onClick="{{ startQa }}" style="width:100%;padding:17px;background:#141413;color:#fff;border:none;border-radius:3px;font-size:14.5px;font-weight:500;cursor:pointer;letter-spacing:.06em">診断をはじめる</button>
+    </div>
+  </sc-if>
+
+  <!-- ================= PHASE 2 : Q&A ================= -->
+  <sc-if value="{{ isQa }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:580px;margin:0 auto;padding:36px 24px 72px">
+      <button onClick="{{ backToWelcome }}" style="background:none;border:none;cursor:pointer;font-size:12px;color:#8f8d88;padding:0 0 22px;display:flex;align-items:center;gap:5px;font-family:inherit">← もどる</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px">
+        <span style="font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.14em;color:#8f8d88">STEP 2 ／ 診断 Q&amp;A</span>
+        <div style="display:flex;gap:7px;align-items:center">
+          <sc-for list="{{ qaStepDots }}" as="d" hint-placeholder-count="4">
+            <span style="{{ d.style }}"></span>
+          </sc-for>
+        </div>
+      </div>
+      <div style="height:4px;background:#e8e7e4;border-radius:99px;overflow:hidden;margin-bottom:46px">
+        <div style="height:100%;background:#141413;border-radius:99px;width:{{ progressPct }};transition:width .45s ease"></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:40px">
+        <sc-for list="{{ currentQuestions }}" as="q" hint-placeholder-count="2">
+          <div>
+            <div style="font-family:'Roboto Mono',monospace;font-size:10px;color:#8f8d88;letter-spacing:.12em;margin-bottom:8px">{{ q.qNum }}</div>
+            <div style="font-size:17px;font-weight:700;color:#141413;margin-bottom:18px;line-height:1.55;text-wrap:pretty">{{ q.title }}</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ q.opts }}" as="o" hint-placeholder-count="4">
+                <button onClick="{{ o.onClick }}" style="{{ o.style }}">
+                  <span style="{{ o.labelStyle }}">{{ o.label }}</span>
+                  <span>{{ o.text }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top:36px">
+        <button onClick="{{ advanceFn }}" style="{{ nextBtnStyle }}">{{ advanceLabel }}</button>
+        <sc-if value="{{ showNextHint }}" hint-placeholder-val="{{ true }}">
+          <div style="text-align:center;font-size:11px;color:#c9c7c2;margin-top:12px">すべての質問に答えると進めます</div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ================= PHASE 3 : RESULT ================= -->
+  <sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:780px;margin:0 auto;padding:48px 24px 80px">
+      <div style="text-align:center;margin-bottom:46px">
+        <div style="font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.16em;color:#8f8d88;margin-bottom:16px">STEP 3 ／ 診断結果</div>
+        <div style="display:inline-flex;align-items:center;gap:11px;padding:8px 20px;background:#141413;border-radius:99px;margin-bottom:20px">
+          <span style="font-family:'Roboto Mono',monospace;font-size:12px;color:#8f8d88">RESULT</span>
+          <span style="font-size:14px;color:#fff;font-weight:500">{{ result.label }}</span>
+        </div>
+        <h1 style="font-size:30px;font-weight:700;color:#141413;margin:0 0 14px">{{ result.title }}</h1>
+        <p style="font-size:14px;line-height:1.9;color:#525048;max-width:480px;margin:0 auto;text-wrap:pretty">{{ result.desc }}</p>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:22px">
+          <sc-for list="{{ resultKeywords }}" as="kw" hint-placeholder-count="3">
+            <span style="font-size:12px;padding:6px 18px;border-radius:99px;border:0.5px solid #141413;color:#141413;font-weight:500">{{ kw }}</span>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- type cards -->
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:48px">
+        <sc-for list="{{ typeCards }}" as="t" hint-placeholder-count="5">
+          <div style="{{ t.rowStyle }}">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+              <span style="{{ t.nameStyle }}">{{ t.name }}</span>
+              <span style="{{ t.tagStyle }}">{{ t.tag }}</span>
+              <sc-if value="{{ t.mine }}" hint-placeholder-val="{{ false }}">
+                <span style="font-size:10px;color:#b87333;background:#f5ede3;padding:3px 9px;border-radius:99px;white-space:nowrap">{{ t.badge }}</span>
+              </sc-if>
+              <span style="{{ t.matchNumStyle }};margin-left:auto">{{ t.matchStr }}</span>
+            </div>
+            <div style="{{ t.descStyle }}">{{ t.desc }}</div>
+            <div style="height:4px;background:#f0efec;border-radius:99px;overflow:hidden;margin-top:10px">
+              <div style="{{ t.barStyle }}"></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- radar + bars -->
+      <div style="display:grid;grid-template-columns:210px 1fr;gap:36px;align-items:center;background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:30px;margin-bottom:50px">
+        <div style="display:flex;justify-content:center">
+          <svg viewBox="0 0 180 180" width="186" height="186">
+            <sc-for list="{{ radar.rings }}" as="r" hint-placeholder-count="4">
+              <polygon points="{{ r.points }}" fill="none" stroke="#e8e7e4" stroke-width="0.5"></polygon>
+            </sc-for>
+            <sc-for list="{{ radar.axes }}" as="a" hint-placeholder-count="5">
+              <line x1="{{ radar.cx }}" y1="{{ radar.cy }}" x2="{{ a.x }}" y2="{{ a.y }}" stroke="#e8e7e4" stroke-width="0.5"></line>
+            </sc-for>
+            <polygon points="{{ radar.data }}" fill="rgba(20,20,19,0.07)" stroke="#141413" stroke-width="1.2" stroke-linejoin="round"></polygon>
+            <sc-for list="{{ radar.labels }}" as="l" hint-placeholder-count="5">
+              <text x="{{ l.x }}" y="{{ l.y }}" text-anchor="{{ l.anchor }}" font-size="8.5" fill="#525048" dominant-baseline="middle" font-family="Noto Sans JP">{{ l.name }}</text>
+            </sc-for>
+          </svg>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:15px">
+          <div style="font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.12em;color:#8f8d88;margin-bottom:2px">ABILITY SCORE</div>
+          <sc-for list="{{ scoreBars }}" as="b" hint-placeholder-count="5">
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span style="font-size:13px;color:#2c2b28">{{ b.name }}</span>
+                <span style="font-family:'Roboto Mono',monospace;font-size:12px;color:#141413">{{ b.v }}</span>
+              </div>
+              <div style="height:5px;background:#f0efec;border-radius:99px;overflow:hidden">
+                <div style="height:100%;background:#141413;border-radius:99px;width:{{ b.width }}"></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- roadmap -->
+      <div style="margin-bottom:44px">
+        <div style="font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.12em;color:#8f8d88;margin-bottom:16px">推奨ロードマップ ／ ROADMAP</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ roadmap }}" as="r" hint-placeholder-count="3">
+            <div style="display:flex;gap:20px;align-items:flex-start;background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:20px 24px">
+              <span style="font-family:'Roboto Mono',monospace;font-size:13px;color:#b87333;flex:none;padding-top:2px">STEP {{ r.step }}</span>
+              <div>
+                <div style="font-size:15px;font-weight:700;color:#141413;margin-bottom:6px">{{ r.title }}</div>
+                <div style="font-size:13px;line-height:1.75;color:#525048;text-wrap:pretty">{{ r.desc }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button onClick="{{ goDashboard }}" style="width:100%;padding:17px;background:#141413;color:#fff;border:none;border-radius:3px;font-size:14.5px;font-weight:500;cursor:pointer;letter-spacing:.06em">ダッシュボードへ進む</button>
+        <button onClick="{{ restartFn }}" style="width:100%;padding:13px;background:none;color:#8f8d88;border:0.5px solid #c9c7c2;border-radius:3px;font-size:13px;cursor:pointer;font-family:inherit">もう一度診断する</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ================= PHASE 4 : DASHBOARD ================= -->
+  <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1080px;margin:0 auto;padding:36px 24px 80px">
+
+      <!-- header -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:28px;flex-wrap:wrap">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px">
+            <span style="font-size:11px;letter-spacing:.06em;color:#fff;background:#141413;padding:4px 11px;border-radius:3px">{{ dashboardTypeName }}</span>
+            <span style="font-size:12px;color:#8f8d88">田中 優一 さん</span>
+            <button onClick="{{ restartFn }}" style="background:none;border:0.5px solid #c9c7c2;border-radius:3px;cursor:pointer;font-size:11px;color:#8f8d88;padding:3px 10px;font-family:inherit;margin-left:4px">再診断</button>
+          </div>
+          <h1 style="font-size:26px;font-weight:700;color:#141413;margin:0;letter-spacing:.01em">目標：PMへの転職</h1>
+        </div>
+        <div style="text-align:right;flex:none">
+          <div style="font-size:11px;color:#8f8d88;margin-bottom:3px">目標達成まで</div>
+          <div style="font-family:'Roboto Mono',monospace;color:#141413;line-height:1"><span style="font-size:46px;font-weight:500">{{ daysRemaining }}</span><span style="font-size:15px;margin-left:5px">日</span></div>
+          <div style="font-size:11px;color:#8f8d88;margin-top:5px">2027年4月15日</div>
+        </div>
+      </div>
+
+      <!-- tabs -->
+      <div style="display:flex;gap:30px;border-bottom:0.5px solid #c9c7c2;margin-bottom:32px">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+          <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+        </sc-for>
+      </div>
+
+      <!-- TAB: DASHBOARD -->
+      <sc-if value="{{ isTabDash }}" hint-placeholder-val="{{ true }}">
+
+        <!-- KPI -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
+          <div style="background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:18px 18px;display:flex;flex-direction:column;gap:11px">
+            <span style="font-size:11px;color:#8f8d88;letter-spacing:.03em">全体進捗</span>
+            <span style="font-family:'Roboto Mono',monospace;color:#141413"><span style="font-size:30px;font-weight:500">{{ overallProgress }}</span><span style="font-size:14px;margin-left:1px">%</span></span>
+            <div style="height:4px;background:#f0efec;border-radius:99px;overflow:hidden"><div style="height:100%;width:{{ overallProgressWidth }};background:#141413;border-radius:99px"></div></div>
+            <span style="font-size:11px;color:#8f8d88">{{ kpiProgressSub }}</span>
+          </div>
+          <div style="background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:18px 18px;display:flex;flex-direction:column;gap:11px">
+            <span style="font-size:11px;color:#8f8d88;letter-spacing:.03em">累計学習</span>
+            <span style="font-family:'Roboto Mono',monospace;color:#141413"><span style="font-size:30px;font-weight:500">142</span><span style="font-size:14px;margin-left:2px">h</span></span>
+            <span style="font-size:11px;color:#c9c7c2">先週比 +9.5h</span>
+          </div>
+          <div style="background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:18px 18px;display:flex;flex-direction:column;gap:11px">
+            <span style="font-size:11px;color:#8f8d88;letter-spacing:.03em">残タスク</span>
+            <span style="font-family:'Roboto Mono',monospace;color:#141413"><span style="font-size:30px;font-weight:500">5</span><span style="font-size:14px;margin-left:2px">件</span></span>
+            <span style="font-size:11px;color:#c9c7c2">今週締切 2件</span>
+          </div>
+          <div style="background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:18px 18px;display:flex;flex-direction:column;gap:11px">
+            <span style="font-size:11px;color:#8f8d88;letter-spacing:.03em">連続学習</span>
+            <span style="font-family:'Roboto Mono',monospace;color:#141413"><span style="font-size:30px;font-weight:500">12</span><span style="font-size:14px;margin-left:2px">日</span></span>
+            <span style="font-size:11px;color:#c9c7c2">自己ベスト更新中</span>
+          </div>
+        </div>
+
+        <!-- PYRAMID -->
+        <div style="background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:30px 28px;margin-bottom:24px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+            <span style="font-size:13px;font-weight:700;color:#141413">マイルストーン・ピラミッド</span>
+            <span style="font-size:11px;color:#8f8d88">▲ ビジョン（最終目標）— クリックで詳細</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:7px;margin:22px 0 12px">
+            <sc-for list="{{ pyramidLayersRev }}" as="pl" hint-placeholder-count="5">
+              <div style="{{ pl.widthStyle }}">
+                <div style="{{ pl.layerStyle }}" onClick="{{ pl.onClick }}">
+                  <span style="{{ pl.nameStyle }}">{{ pl.name }}</span>
+                  <span style="display:flex;align-items:center;gap:9px;flex:none">
+                    <span style="{{ pl.badgeStyle }}">{{ pl.status }}</span>
+                    <span style="{{ pl.pctStyle }}">{{ pl.pctStr }}</span>
+                  </span>
+                </div>
+                <sc-if value="{{ pl.isSelected }}" hint-placeholder-val="{{ false }}">
+                  <div style="background:#f5f5f4;border-left:0.5px solid #e8e7e4;border-right:0.5px solid #e8e7e4;border-bottom:0.5px solid #e8e7e4;border-radius:0 0 4px 4px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+                    <div style="font-family:'Roboto Mono',monospace;font-size:11px;color:#8f8d88">{{ pl.period }}</div>
+                    <sc-for list="{{ pl.tasks }}" as="pt" hint-placeholder-count="3">
+                      <div style="display:flex;align-items:center;gap:11px;cursor:pointer" onClick="{{ pt.onClick }}">
+                        <span style="{{ pt.dotStyle }}"></span>
+                        <span style="{{ pt.textStyle }}">{{ pt.label }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <div style="text-align:center;font-size:11px;color:#8f8d88;margin-top:8px">▼ 基盤 ＝ 土台（積み上げの出発点）</div>
+        </div>
+
+        <!-- 2 COLUMN -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+
+          <!-- timeline -->
+          <div style="background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:26px">
+            <div style="font-size:13px;font-weight:700;color:#141413;margin-bottom:22px">マイルストーン進捗</div>
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ timeline }}" as="m" hint-placeholder-count="5">
+                <div style="display:flex;gap:15px;align-items:flex-start">
+                  <div style="display:flex;flex-direction:column;align-items:center;flex:none;padding-top:2px">
+                    <span style="{{ m.dotStyle }}"></span>
+                    <span style="{{ m.lineStyle }}"></span>
+                  </div>
+                  <div style="padding-bottom:20px;margin-top:-3px">
+                    <div style="{{ m.nameStyle }}">{{ m.name }}</div>
+                    <span style="{{ m.badgeStyle }};display:inline-block;margin-top:7px">{{ m.status }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- heatmap -->
+          <div style="background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:26px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
+              <span style="font-size:13px;font-weight:700;color:#141413">今週の学習</span>
+              <div style="display:flex;align-items:center;gap:5px">
+                <span style="font-size:10px;color:#8f8d88;margin-right:1px">少</span>
+                <span style="width:11px;height:11px;border-radius:2px;background:#eeede9;border:0.5px solid #e8e7e4"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:#d3d1cc"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:#8f8d88"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:#2c2b28"></span>
+                <span style="font-size:10px;color:#8f8d88;margin-left:1px">多</span>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:42px repeat(6,1fr);gap:6px;margin-bottom:6px">
+              <span></span>
+              <sc-for list="{{ heatDays }}" as="d" hint-placeholder-count="6">
+                <span style="text-align:center;font-size:10px;color:#8f8d88">{{ d }}</span>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ heatRows }}" as="row" hint-placeholder-count="3">
+                <div style="display:grid;grid-template-columns:42px repeat(6,1fr);gap:6px;align-items:center">
+                  <span style="font-size:11px;color:#525048">{{ row.subject }}</span>
+                  <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="6">
+                    <span style="height:28px;border-radius:3px;border:0.5px solid #efeeeb;background:{{ cell.bg }}"></span>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+            <div style="font-size:11px;color:#8f8d88;margin-top:18px;line-height:1.7">継続日数 <span style="font-family:'Roboto Mono',monospace;color:#141413">12</span> 日。今週は資格学習に重点を置いています。</div>
+          </div>
+
+        </div>
+      </sc-if>
+
+      <!-- TAB: ROADMAP -->
+      <sc-if value="{{ isTabRoadmap }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px">
+            <div>
+              <div style="font-size:15px;font-weight:700;color:#141413;margin-bottom:5px">PMへの転職ロードマップ</div>
+              <div style="font-size:12px;color:#8f8d88">基盤から頂点へ積み上げる5段階のマイルストーン</div>
+            </div>
+            <div style="font-family:'Roboto Mono',monospace;font-size:11px;color:#8f8d88">目標日：2027年4月15日</div>
+          </div>
+          <div style="display:flex;flex-direction:column">
+            <sc-for list="{{ roadmapCards }}" as="m" hint-placeholder-count="5">
+              <div style="display:flex;gap:20px;align-items:flex-start">
+                <div style="display:flex;flex-direction:column;align-items:center;flex:none;padding-top:24px;width:13px">
+                  <span style="{{ m.dotStyle }}"></span>
+                  <span style="{{ m.lineStyle }}"></span>
+                </div>
+                <div style="{{ m.cardStyle }};flex:1;margin-bottom:14px">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px">
+                    <div>
+                      <div style="font-family:'Roboto Mono',monospace;font-size:11px;color:#8f8d88;margin-bottom:6px">{{ m.num }}</div>
+                      <div style="{{ m.titleStyle }}">{{ m.name }}</div>
+                    </div>
+                    <span style="{{ m.badgeStyle }}">{{ m.status }}</span>
+                  </div>
+                  <div style="font-size:11px;color:#8f8d88;margin-bottom:14px;font-family:'Roboto Mono',monospace">{{ m.period }}</div>
+                  <div style="height:4px;background:#f0efec;border-radius:99px;overflow:hidden;margin-bottom:18px">
+                    <div style="height:100%;background:#141413;border-radius:99px;width:{{ m.progressWidth }}"></div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:10px">
+                    <sc-for list="{{ m.tasks }}" as="t" hint-placeholder-count="3">
+                      <div style="display:flex;align-items:center;gap:12px">
+                        <span style="{{ t.dotStyle }}"></span>
+                        <span style="{{ t.textStyle }}">{{ t.label }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- TAB: CALENDAR -->
+      <sc-if value="{{ isTabCal }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:1fr 264px;gap:20px;align-items:flex-start">
+
+          <!-- main calendar panel -->
+          <div style="background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:26px 24px">
+            <!-- stats -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:26px">
+              <sc-for list="{{ calStats }}" as="s" hint-placeholder-count="3">
+                <div style="border:0.5px solid #e8e7e4;border-radius:4px;padding:14px 16px">
+                  <div style="font-family:'Roboto Mono',monospace;font-size:22px;font-weight:500;color:#141413;margin-bottom:4px">{{ s.val }}</div>
+                  <div style="font-size:11px;color:#8f8d88">{{ s.label }}</div>
+                  <div style="font-size:10px;color:#c9c7c2;margin-top:2px">{{ s.sub }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <!-- month title -->
+            <div style="font-size:13px;font-weight:700;color:#141413;margin-bottom:13px">2026年 6月</div>
+            <!-- weekday header -->
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px">
+              <sc-for list="{{ calWeekdays }}" as="w" hint-placeholder-count="7">
+                <span style="text-align:center;font-size:10px;color:#8f8d88">{{ w }}</span>
+              </sc-for>
+            </div>
+            <!-- day grid -->
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">
+              <sc-for list="{{ calCells }}" as="c" hint-placeholder-count="30">
+                <div style="{{ c.cellStyle }}">
+                  <span>{{ c.day }}</span>
+                  <sc-if value="{{ c.showHours }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size:9px;opacity:.8">{{ c.hoursStr }}</span>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <!-- legend -->
+            <div style="display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:4px">
+                <span style="width:11px;height:11px;border-radius:2px;background:#eeede9;border:0.5px solid #e8e7e4;display:inline-block"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:rgba(20,20,19,.35);display:inline-block"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:rgba(20,20,19,.56);display:inline-block"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:#141413;display:inline-block"></span>
+              </div>
+              <span style="font-size:11px;color:#8f8d88">学習時間（少 → 多）</span>
+              <div style="display:flex;align-items:center;gap:5px;margin-left:8px">
+                <span style="width:9px;height:9px;border-radius:99px;border:1.5px solid #141413;display:inline-block"></span>
+                <span style="font-size:11px;color:#525048">今日 (6/21)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- upcoming events -->
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:22px 20px">
+              <div style="font-size:13px;font-weight:700;color:#141413;margin-bottom:18px">今後の予定</div>
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <sc-for list="{{ upcomingEvents }}" as="e" hint-placeholder-count="4">
+                  <div style="display:flex;gap:14px;align-items:flex-start">
+                    <div style="flex:none;text-align:center;padding:7px 9px;background:#f5f5f4;border:0.5px solid #e8e7e4;border-radius:3px;min-width:50px">
+                      <div style="font-family:'Roboto Mono',monospace;font-size:11.5px;color:#141413;white-space:nowrap">{{ e.date }}</div>
+                      <div style="font-size:10px;color:#8f8d88;margin-top:2px">{{ e.wd }}</div>
+                    </div>
+                    <div style="flex:1">
+                      <div style="font-size:13px;color:#2c2b28;line-height:1.5;margin-bottom:6px">{{ e.label }}</div>
+                      <span style="{{ e.tagStyle }}">{{ e.subject }}</span>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:20px">
+              <div style="font-size:12px;font-weight:700;color:#141413;margin-bottom:12px">月次まとめ</div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#8f8d88">ベストの連続学習</span><span style="font-family:'Roboto Mono',monospace;color:#141413">12日</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#8f8d88">最長学習（1日）</span><span style="font-family:'Roboto Mono',monospace;color:#141413">3.0h</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#8f8d88">最多学習科目</span><span style="color:#2c2b28">AWS</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#8f8d88">前月比</span><span style="font-family:'Roboto Mono',monospace;color:#141413">+18%</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </sc-if>
+
+      <!-- TAB: LOG -->
+      <sc-if value="{{ isTabLog }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:20px">
+
+          <!-- stat row -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+            <sc-for list="{{ logStats }}" as="s" hint-placeholder-count="4">
+              <div style="background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:18px 20px">
+                <div style="font-size:11px;color:#8f8d88;margin-bottom:9px">{{ s.label }}</div>
+                <div style="font-family:'Roboto Mono',monospace;font-size:28px;font-weight:500;color:#141413">{{ s.val }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <!-- chart row -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+            <!-- weekly bar chart -->
+            <div style="background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:24px">
+              <div style="font-size:13px;font-weight:700;color:#141413;margin-bottom:4px">今週の学習時間</div>
+              <div style="font-size:11px;color:#8f8d88;margin-bottom:20px">Mon – Sun（6/15 – 6/21）</div>
+              <div style="display:flex;gap:10px;align-items:flex-end;border-bottom:0.5px solid #e8e7e4;padding-bottom:1px">
+                <sc-for list="{{ weekBars }}" as="b" hint-placeholder-count="7">
+                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+                    <span style="{{ b.labelStyle }}">{{ b.label }}</span>
+                    <div style="{{ b.barStyle }}"></div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:7px">
+                <sc-for list="{{ weekBars }}" as="b" hint-placeholder-count="7">
+                  <span style="{{ b.dayStyle }};flex:1;text-align:center">{{ b.d }}</span>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:center;gap:7px;margin-top:16px;padding-top:14px;border-top:0.5px solid #f0efec">
+                <span style="font-size:12px;color:#8f8d88">週計</span>
+                <span style="font-family:'Roboto Mono',monospace;font-size:16px;color:#141413">13.5h</span>
+                <span style="font-size:11px;color:#8f8d88;margin-left:8px">先週比</span>
+                <span style="font-size:12px;color:#525048">+2.0h</span>
+              </div>
+            </div>
+
+            <!-- subject breakdown -->
+            <div style="background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:24px">
+              <div style="font-size:13px;font-weight:700;color:#141413;margin-bottom:4px">科目別累計</div>
+              <div style="font-size:11px;color:#8f8d88;margin-bottom:22px">全142h の内訳</div>
+              <div style="display:flex;flex-direction:column;gap:20px">
+                <sc-for list="{{ subjectBars }}" as="s" hint-placeholder-count="3">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+                      <span style="font-size:14px;color:#2c2b28;font-weight:500">{{ s.name }}</span>
+                      <span style="display:flex;align-items:baseline;gap:5px">
+                        <span style="font-family:'Roboto Mono',monospace;font-size:16px;color:#141413;font-weight:500">{{ s.h }}h</span>
+                        <span style="font-family:'Roboto Mono',monospace;font-size:11px;color:#8f8d88">{{ s.pct }}%</span>
+                      </span>
+                    </div>
+                    <div style="height:6px;background:#f0efec;border-radius:99px;overflow:hidden">
+                      <div style="height:100%;background:#141413;border-radius:99px;width:{{ s.barWidth }}"></div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- log list -->
+          <div style="background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:24px 28px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <div style="font-size:13px;font-weight:700;color:#141413">学習ログ</div>
+              <div style="font-size:11px;color:#8f8d88">直近7件</div>
+            </div>
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ logsEnh }}" as="l" hint-placeholder-count="7">
+                <div style="display:flex;align-items:center;gap:18px;padding:14px 0;border-bottom:0.5px solid #f0efec">
+                  <span style="font-family:'Roboto Mono',monospace;font-size:12px;color:#8f8d88;flex:none;width:52px">{{ l.date }}</span>
+                  <span style="{{ l.subjectStyle }}">{{ l.subject }}</span>
+                  <span style="font-size:13.5px;color:#2c2b28;flex:1;text-wrap:pretty">{{ l.topic }}</span>
+                  <span style="font-family:'Roboto Mono',monospace;font-size:13px;color:#141413;flex:none">{{ l.hours }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+        </div>
+      </sc-if>
+
+    </div>
+  </sc-if>
+
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;welcome&quot;,&quot;options&quot;:[&quot;welcome&quot;,&quot;qa&quot;,&quot;result&quot;,&quot;dashboard&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    const valid = ['welcome','qa','result','dashboard'];
+    const start = valid.includes(props.startScreen) ? props.startScreen : 'welcome';
+    this.state = { phase: start, qaPage: 0, answers: {}, tab: 'dashboard', selectedLayer: null, completedTasks: {} };
+  }
+
+  QUESTIONS = [
+    { id:'q1', page:0, title:'仕事でやりがいを感じる瞬間は？', opts:[
+      '専門分野を深く突き詰められたとき',
+      '異なる領域の知識をつないで課題を解いたとき',
+      'チームの橋渡しをして全体が前進したとき',
+      '幅広い領域を俯瞰してマネジメントできたとき' ]},
+    { id:'q2', page:0, title:'3年後にありたい姿は？', opts:[
+      '第一人者と認められる専門家',
+      '複数領域をまたぐπ型人材',
+      '専門を軸に幅広く動くT型人材',
+      '組織を率いるマネージャー' ]},
+    { id:'q3', page:1, title:'自分に合う学習スタイルは？', opts:[
+      '一つのテーマをとことん掘り下げる',
+      '関連領域を横断的に学ぶ',
+      '実務を通して手を動かして学ぶ',
+      '人との対話から学び、深める' ]},
+    { id:'q4', page:1, title:'チームで自然と担うポジションは？', opts:[
+      '専門を担う実務の中核',
+      '領域間をつなぐ調整役',
+      '全体を見渡す推進役',
+      '新しい領域を開拓する役' ]},
+  ];
+
+  SCORES = [ {name:'専門深度',v:82},{name:'横断力',v:74},{name:'学習力',v:78},{name:'実行力',v:60},{name:'発信力',v:45} ];
+
+  SCORES_BY_TYPE = {
+    'T': [{name:'専門深度',v:82},{name:'横断力',v:74},{name:'学習力',v:78},{name:'実行力',v:60},{name:'発信力',v:45}],
+    'I': [{name:'専門深度',v:95},{name:'横断力',v:38},{name:'学習力',v:86},{name:'実行力',v:68},{name:'発信力',v:50}],
+    'π':[{name:'専門深度',v:80},{name:'横断力',v:88},{name:'学習力',v:82},{name:'実行力',v:62},{name:'発信力',v:58}],
+    'H': [{name:'専門深度',v:55},{name:'横断力',v:84},{name:'学習力',v:68},{name:'実行力',v:76},{name:'発信力',v:82}],
+    '━':[{name:'専門深度',v:62},{name:'横断力',v:78},{name:'学習力',v:58},{name:'実行力',v:90},{name:'発信力',v:70}],
+  };
+
+  TYPE_RESULTS = {
+    'T': { label:'T型キャリア', title:'あなたは「T型」タイプ', desc:'一つの専門性を軸に、幅広い知識を掛け合わせて価値を生むタイプ。PMへの転職と相性の良いキャリアタイプです。', keywords:['応用力','専門×幅広','PM適性◎'] },
+    'I': { label:'I型キャリア', title:'あなたは「I型」タイプ', desc:'一つの領域を深く掘り下げ、圧倒的な専門深度で勝負するタイプ。特定領域の第一人者を目指しましょう。', keywords:['専門深度','一点突破','第一人者'] },
+    'π': { label:'π型キャリア',title:'あなたは「π型」タイプ',desc:'2つの専門軸を統合して独自の価値を生み出すタイプ。掛け合わせの強みでPMキャリアも十分狙えます。',keywords:['2軸統合','掛け合わせ','独自価値'] },
+    'H': { label:'H型キャリア', title:'あなたは「H型」タイプ', desc:'組織やチームをつなぐ橋渡し力が強みのタイプ。調整力とコミュニケーション力でPMとして活躍できます。', keywords:['橋渡し力','調整力','共感力'] },
+    '━': { label:'━型キャリア', title:'あなたは「━型」タイプ', desc:'幅広い視野で組織を率いる統率力が強みのタイプ。マネジメントを軸にキャリアを積み上げましょう。', keywords:['統率力','俯瞰思考','組織牽引'] },
+  };
+
+  TYPE_MATCHES = {
+    'T': {'T':91,'π':68,'H':52,'I':45,'━':38},
+    'I': {'I':91,'T':72,'π':58,'H':45,'━':38},
+    'π': {'π':91,'T':75,'I':60,'H':50,'━':42},
+    'H': {'H':91,'π':68,'T':62,'━':52,'I':38},
+    '━': {'━':91,'H':72,'π':65,'T':52,'I':38},
+  };
+
+  TYPES = [
+    {name:'T型', tag:'専門 × 幅広知識',   desc:'専門軸を持ちながら隣接領域を広げ、応用力で価値を生む。PMへの転職と最相性◎', mine:true,  match:91},
+    {name:'π型', tag:'複数専門 × 統合力', desc:'2軸の専門を掛け合わせ、独自の視点と統合力で突破する。',                     mine:false, match:68},
+    {name:'H型', tag:'橋渡しの才能',       desc:'組織・チームを横断してつなぐコミュニケーション力に長ける。',                  mine:false, match:52},
+    {name:'I型', tag:'深いスペシャリスト', desc:'一点を徹底的に掘り下げ、専門深度で圧倒的な価値を生む。',                     mine:false, match:45},
+    {name:'━型', tag:'広域マネジメント',   desc:'幅広い視野と俯瞰力で組織・事業を率いるリーダー型。',                        mine:false, match:38},
+  ];
+
+  CHIPS = [
+    {name:'T型', shape:'T', tag:'専門 × 幅広知識',    desc:'専門軸を持ちながら幅広く動く'},
+    {name:'I型', shape:'I', tag:'深いスペシャリスト',  desc:'一点を徹底的に掘り下げる'},
+    {name:'π型', shape:'π', tag:'複数専門 × 統合力', desc:'2つの専門軸を掛け合わせる'},
+    {name:'H型', shape:'H', tag:'橋渡しの才能',        desc:'領域間をつなぐ調整力'},
+    {name:'━型', shape:'━', tag:'広域マネジメント',   desc:'幅広い視野で統率する'},
+  ];
+
+  HEAT = [
+    {subject:'AWS', cells:[2,3,1,0,2,3]},
+    {subject:'英語', cells:[1,1,2,2,1,0]},
+    {subject:'PM',  cells:[0,2,3,1,2,1]},
+  ];
+
+  TIMELINE = [
+    {name:'自己分析・キャリアタイプ診断', status:'完了'},
+    {name:'業界知識・人脈形成', status:'完了'},
+    {name:'資格取得・スキル証明', status:'進行中'},
+    {name:'転職活動・書類／面接', status:'未着手'},
+    {name:'PM転職・内定獲得', status:'未着手'},
+  ];
+
+  ROADMAP = [
+    {step:'01', title:'資格取得でスキルを可視化', desc:'AWS認定・PM関連資格を取得し、専門性を客観的に証明する。'},
+    {step:'02', title:'業界知識と転職の準備', desc:'志望業界を絞り込み、職務経歴書とポートフォリオを整える。'},
+    {step:'03', title:'PM内定を獲得', desc:'面接対策を重ね、目標ポジションでの内定獲得を目指す。'},
+  ];
+
+  LOGS = [
+    {date:'06 / 19', subject:'AWS', topic:'VPC・ネットワーク設計', hours:'2.5h'},
+    {date:'06 / 18', subject:'PM', topic:'アジャイル開発の基礎', hours:'1.5h'},
+    {date:'06 / 17', subject:'英語', topic:'ビジネス英会話 ロールプレイ', hours:'1.0h'},
+    {date:'06 / 16', subject:'AWS', topic:'IAM・セキュリティ設計', hours:'2.0h'},
+    {date:'06 / 15', subject:'PM', topic:'要件定義の進め方', hours:'1.5h'},
+    {date:'06 / 14', subject:'AWS', topic:'EC2・オートスケーリング', hours:'2.0h'},
+    {date:'06 / 12', subject:'英語', topic:'技術ドキュメント読解', hours:'1.0h'},
+  ];
+
+  MILESTONES = [
+    { name:'自己分析・キャリアタイプ診断', status:'完了', progress:100, period:'2025.09', tasks:[
+      {label:'価値観の棚卸し', state:'done'},
+      {label:'キャリアタイプ診断', state:'done'},
+      {label:'強み・弱みの整理', state:'done'} ]},
+    { name:'業界知識・人脈形成', status:'完了', progress:100, period:'2025.10 – 2025.12', tasks:[
+      {label:'業界研究レポート作成', state:'done'},
+      {label:'勉強会・イベント参加 ×3', state:'done'},
+      {label:'メンター獲得', state:'done'} ]},
+    { name:'資格取得・スキル証明', status:'進行中', progress:45, period:'2026.01 – 2026.06', tasks:[
+      {label:'AWS SAA 認定取得', state:'done'},
+      {label:'PMP 試験対策', state:'current'},
+      {label:'TOEIC 800点', state:'todo'} ]},
+    { name:'転職活動・書類／面接', status:'未着手', progress:0, period:'2026.07 – 2026.09', tasks:[
+      {label:'職務経歴書・レジュメ作成', state:'todo'},
+      {label:'ポートフォリオ整備', state:'todo'},
+      {label:'模擬面接 ×5', state:'todo'} ]},
+    { name:'PM転職・内定獲得', status:'未着手', progress:0, period:'2026.10 –', tasks:[
+      {label:'企業エントリー', state:'todo'},
+      {label:'選考・面接', state:'todo'},
+      {label:'内定獲得・意思決定', state:'todo'} ]},
+  ];
+
+  EVENTS = [
+    {date:'06 / 25', wd:'水', label:'AWS SAA 模擬試験', subject:'AWS'},
+    {date:'06 / 28', wd:'土', label:'PM勉強会 #12 登壇', subject:'PM'},
+    {date:'07 / 02', wd:'木', label:'メンター面談', subject:'面談'},
+    {date:'07 / 10', wd:'金', label:'職務経歴書ドラフト締切', subject:'転職'},
+  ];
+
+  HOURS_BY_DAY = {2:2,4:1.5,5:3,8:2,9:1,11:2.5,12:3,15:1.5,16:2,18:1,19:2.5,21:3,23:2,24:1.5,26:2.5};
+
+  WEEK = [{d:'月',h:2.5},{d:'火',h:3},{d:'水',h:1.5},{d:'木',h:0},{d:'金',h:2},{d:'土',h:3},{d:'日',h:1.5}];
+
+  SUBJ_TOTALS = [{name:'AWS',h:64},{name:'PM',h:46},{name:'英語',h:32}];
+
+  componentDidMount(){
+    try{
+      const d=JSON.parse(localStorage.getItem('compass-state')||'{}');
+      if(d.phase) this.setState({phase:d.phase,answers:d.answers||{},completedTasks:d.completedTasks||{}});
+    }catch(e){}
+  }
+
+  componentDidUpdate(prev){
+    if (prev.startScreen !== this.props.startScreen){
+      const valid = ['welcome','qa','result','dashboard'];
+      if (valid.includes(this.props.startScreen)) this.setState({ phase: this.props.startScreen });
+    }
+    const s=this.state,p=prev;
+    if(s.answers!==p.answers||s.phase!==p.phase||s.completedTasks!==p.completedTasks){
+      try{ localStorage.setItem('compass-state',JSON.stringify({phase:s.phase,answers:s.answers,completedTasks:s.completedTasks})); }catch(e){}
+    }
+  }
+
+  go(phase){ this.setState({ phase }); try{ window.scrollTo(0,0); }catch(e){} }
+  setTab(tab){ this.setState({ tab }); }
+  restart(){
+    try{localStorage.removeItem('compass-state');}catch(e){}
+    this.setState({phase:'welcome',qaPage:0,answers:{},completedTasks:{},selectedLayer:null,tab:'dashboard'});
+    try{window.scrollTo(0,0);}catch(e){}
+  }
+
+  select(qId, idx){
+    this.setState(s => ({ answers: { ...s.answers, [qId]: idx } }));
+  }
+
+  renderVals(){
+    const { phase, qaPage, answers, tab, selectedLayer, completedTasks } = this.state;
+
+    // ---- Q&A ----
+    const optBase = 'display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:17px 18px;background:#fff;border:0.5px solid #c9c7c2;border-radius:3px;cursor:pointer;font-size:14px;line-height:1.5;color:#2c2b28;transition:background .15s,border-color .15s,color .15s';
+    const optSel  = 'display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:17px 18px;background:#141413;border:0.5px solid #141413;border-radius:3px;cursor:pointer;font-size:14px;line-height:1.5;color:#fff;transition:background .15s,border-color .15s,color .15s';
+    const labBase = "flex:none;width:24px;height:24px;border-radius:99px;border:0.5px solid #c9c7c2;display:flex;align-items:center;justify-content:center;font-family:'Roboto Mono',monospace;font-size:11px;color:#8f8d88";
+    const labSel  = "flex:none;width:24px;height:24px;border-radius:99px;border:0.5px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-family:'Roboto Mono',monospace;font-size:11px;color:#fff";
+    const currentQuestions = this.QUESTIONS.filter(q => q.page === qaPage).map((q, pi) => ({
+      qNum: 'Q' + (qaPage * 2 + pi + 1) + ' / 4',
+      title: q.title,
+      opts: q.opts.map((text, idx) => {
+        const sel = answers[q.id] === idx;
+        return { label: String.fromCharCode(65 + idx), text, selected: sel,
+          style: sel ? optSel : optBase, labelStyle: sel ? labSel : labBase,
+          onClick: () => this.select(q.id, idx) };
+      })
+    }));
+    const answered = this.QUESTIONS.filter(q => answers[q.id] !== undefined).length;
+    const progressPct = (answered / 4 * 100) + '%';
+    const pageQs = this.QUESTIONS.filter(q => q.page === qaPage);
+    const canAdvance = pageQs.every(q => answers[q.id] !== undefined);
+    const advanceLabel = qaPage === 0 ? '次のページへ' : '診断結果を見る';
+    const advanceFn = canAdvance
+      ? () => { if (qaPage === 0) this.setState({ qaPage: 1 }, ()=>{ try{window.scrollTo(0,0);}catch(e){} }); else this.go('result'); }
+      : () => {};
+    const nextBtnStyle = canAdvance
+      ? "width:100%;padding:16px;background:#141413;color:#fff;border:none;border-radius:3px;font-size:14.5px;font-weight:500;cursor:pointer;letter-spacing:.06em"
+      : "width:100%;padding:16px;background:#f5f5f4;color:#c9c7c2;border:0.5px solid #e8e7e4;border-radius:3px;font-size:14.5px;cursor:default";
+    const showNextHint = !canAdvance;
+    const qaStepDots = ['q1','q2','q3','q4'].map(qid => ({
+      style: answers[qid] !== undefined
+        ? 'width:8px;height:8px;border-radius:99px;background:#141413'
+        : 'width:8px;height:8px;border-radius:99px;background:#fff;border:0.5px solid #c9c7c2'
+    }));
+    const TM = {q1:['I','T','H','━'],q2:['I','π','T','━'],q3:['I','π','T','H'],q4:['I','H','━','π']};
+    const tScores = {'T':0,'I':0,'π':0,'H':0,'━':0};
+    Object.entries(answers).forEach(([qid,idx]) => { const t=TM[qid]&&TM[qid][idx]; if(t&&tScores.hasOwnProperty(t))tScores[t]++; });
+    const resultType = Object.entries(tScores).sort((a,b)=>b[1]-a[1])[0][0];
+    const resultInfo = this.TYPE_RESULTS[resultType] || this.TYPE_RESULTS['T'];
+    const totalTasks = this.MILESTONES.reduce((a,m)=>a+m.tasks.length, 0);
+    const doneTasks = this.MILESTONES.reduce((sum,m,mi)=>
+      sum+m.tasks.reduce((s,t,ti)=>{ const k=mi+'-'+ti; const v=completedTasks.hasOwnProperty(k)?completedTasks[k]:t.state==='done'; return s+(v?1:0); },0)
+    ,0);
+    const overallProgress = Math.round(doneTasks/totalTasks*100);
+    const overallProgressWidth = overallProgress+'%';
+    const kpiProgressSub = doneTasks + ' / ' + totalTasks + ' タスク完了';
+    const daysRemaining = Math.max(0,Math.ceil((new Date(2027,3,15)-new Date())/86400000));
+    const dashboardTypeName = resultType + '型キャリア';
+    const resultKeywords = resultInfo.keywords || [];
+
+    // ---- type cards ----
+    const typeCards = this.TYPES.map(t => {
+      const typeKey = t.name.slice(0, -1);
+      const mine = typeKey === resultType;
+      const matchVal = (this.TYPE_MATCHES[resultType] || {})[typeKey] || t.match;
+      return {
+        name:t.name, tag:t.tag, desc:t.desc, mine, match:matchVal, badge:'あなたのタイプ',
+        matchStr: matchVal + '%',
+        rowStyle: mine
+          ? 'background:#141413;border:0.5px solid #141413;border-radius:4px;padding:18px 22px'
+          : 'background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:18px 22px',
+        nameStyle: 'font-size:20px;font-weight:700;flex:none;' + (mine?'color:#fff':'color:#2c2b28'),
+        tagStyle:  'font-size:11px;padding:3px 9px;border-radius:99px;flex:none;' + (mine?'background:rgba(255,255,255,.1);color:#c9c7c2':'background:#f5f5f4;border:0.5px solid #e8e7e4;color:#8f8d88'),
+        descStyle: 'font-size:12.5px;line-height:1.75;' + (mine?'color:#c9c7c2':'color:#525048'),
+        matchNumStyle: "font-family:'Roboto Mono',monospace;font-weight:500;" + (mine?'font-size:18px;color:#fff':'font-size:14px;color:#8f8d88'),
+        barStyle: 'height:100%;border-radius:99px;width:' + matchVal + '%;background:' + (mine?'rgba(255,255,255,.5)':'#c9c7c2'),
+      };
+    });
+
+    // ---- radar ----
+    const currentScores = this.SCORES_BY_TYPE[resultType] || this.SCORES;
+    const cx = 90, cy = 90, R = 56;
+    const ang = i => (-90 + i * 72) * Math.PI / 180;
+    const pt = (i, f) => { const r = R * f; return [ +(cx + r * Math.cos(ang(i))).toFixed(1), +(cy + r * Math.sin(ang(i))).toFixed(1) ]; };
+    const ringStr = f => currentScores.map((_, i) => pt(i, f).join(',')).join(' ');
+    const radar = {
+      cx, cy,
+      rings: [0.25, 0.5, 0.75, 1].map(f => ({ points: ringStr(f) })),
+      axes: currentScores.map((_, i) => { const [x, y] = pt(i, 1); return { x, y }; }),
+      data: currentScores.map((s, i) => pt(i, s.v / 100).join(',')).join(' '),
+      labels: currentScores.map((s, i) => { const [x, y] = pt(i, 1.32); return { x, y, name: s.name, anchor: x < cx - 3 ? 'end' : (x > cx + 3 ? 'start' : 'middle') }; })
+    };
+    const scoreBars = currentScores.map(s => ({ name:s.name, v:s.v, width: s.v + '%' }));
+
+    // ---- timeline ----
+    const dotMap = {
+      '完了':'width:11px;height:11px;border-radius:99px;background:#141413;border:0.5px solid #141413;flex:none',
+      '進行中':'width:11px;height:11px;border-radius:99px;background:#fff;border:1.5px solid #b87333;flex:none',
+      '未着手':'width:11px;height:11px;border-radius:99px;background:#fff;border:0.5px solid #c9c7c2;flex:none'
+    };
+    const badgeMap = {
+      '完了':'white-space:nowrap;font-size:10.5px;padding:2px 9px;border-radius:99px;border:0.5px solid #c9c7c2;color:#8f8d88',
+      '進行中':'white-space:nowrap;font-size:10.5px;padding:2px 9px;border-radius:99px;background:#f5ede3;color:#b87333;font-weight:500',
+      '未着手':'white-space:nowrap;font-size:10.5px;padding:2px 9px;border-radius:99px;border:0.5px solid #e8e7e4;color:#c9c7c2'
+    };
+    const timeline = this.TIMELINE.map((t, i) => ({
+      name:t.name, status:t.status, dotStyle:dotMap[t.status], badgeStyle:badgeMap[t.status],
+      lineStyle: i === this.TIMELINE.length - 1 ? 'width:0.5px;height:0;background:transparent' : 'width:0.5px;flex:1;min-height:30px;background:#e8e7e4',
+      nameStyle: t.status === '未着手' ? 'font-size:13px;color:#8f8d88;line-height:1.5' : 'font-size:13px;color:#2c2b28;font-weight:500;line-height:1.5'
+    }));
+
+    // ---- heatmap (dashboard) ----
+    const HC = ['#eeede9', '#d3d1cc', '#8f8d88', '#2c2b28'];
+    const heatRows = this.HEAT.map(r => ({ subject:r.subject, cells: r.cells.map(v => ({ bg: HC[v] })) }));
+    const heatDays = ['月', '火', '水', '木', '金', '土'];
+
+    // ---- roadmap cards ----
+    const taskDot = { done:'width:8px;height:8px;border-radius:99px;background:#141413;flex:none', current:'width:8px;height:8px;border-radius:99px;background:#fff;border:1.5px solid #b87333;flex:none', todo:'width:8px;height:8px;border-radius:99px;background:#fff;border:0.5px solid #c9c7c2;flex:none' };
+    const taskText = { done:'font-size:13px;color:#c9c7c2;text-decoration:line-through', current:'font-size:13px;color:#b87333;font-weight:500', todo:'font-size:13px;color:#8f8d88' };
+    const roadmapCards = this.MILESTONES.map((m, i) => ({
+      name:m.name, status:m.status, period:m.period,
+      num: String(i+1).padStart(2,'0'),
+      progressWidth: m.progress + '%',
+      dotStyle: dotMap[m.status],
+      lineStyle: i === this.MILESTONES.length-1 ? 'width:0.5px;height:0;background:transparent;flex:none' : 'width:0.5px;flex:1;min-height:52px;background:#e8e7e4',
+      badgeStyle: badgeMap[m.status],
+      cardStyle: m.status === '進行中'
+        ? 'background:#fff;border:0.5px solid #b87333;border-radius:4px;padding:22px 24px'
+        : m.status === '完了'
+        ? 'background:#fafaf9;border:0.5px solid #e8e7e4;border-radius:4px;padding:22px 24px'
+        : 'background:#fff;border:0.5px solid #e8e7e4;border-radius:4px;padding:22px 24px',
+      titleStyle: m.status === '未着手' ? 'font-size:15px;font-weight:700;color:#8f8d88' : 'font-size:15px;font-weight:700;color:#141413',
+      tasks: m.tasks.map(t => ({ label:t.label, dotStyle:taskDot[t.state], textStyle:taskText[t.state] }))
+    }));
+
+    // ---- pyramid interactive ----
+    const PLW  = ['100%','85%','70%','52%','36%'];
+    const PLBG = ['#c9c7c2','#888780','#525048','#2c2b28','#141413'];
+    const PLTC = ['#2c2b28','#fff','#fff','#fff','#fff'];
+    const PLPAD = ['24px','22px','20px','18px','16px'];
+    const pyramidLayersRev = [...this.MILESTONES].reverse().map((m, ri) => {
+      const i = 4 - ri;
+      const sel = selectedLayer === i;
+      const lBadge = m.status === '進行中'
+        ? 'white-space:nowrap;font-size:10px;padding:2px 9px;border-radius:99px;background:#f5ede3;color:#b87333;font-weight:500'
+        : m.status === '完了'
+        ? 'white-space:nowrap;font-size:10px;padding:2px 9px;border-radius:99px;border:0.5px solid '+(i===0?'#8f8d88;color:#525048':'rgba(255,255,255,.45);color:#fff')
+        : 'white-space:nowrap;font-size:10px;padding:2px 9px;border-radius:99px;border:0.5px solid rgba(255,255,255,.22);color:#8f8d88';
+      return {
+        name:m.name, status:m.status, progress:m.progress, period:m.period,
+        pctStr: m.progress + '%',
+        isSelected: sel,
+        widthStyle: 'width:' + PLW[i],
+        onClick: () => this.setState(s => ({ selectedLayer: s.selectedLayer === i ? null : i })),
+        layerStyle: 'display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px ' + PLPAD[i] + ';background:' + PLBG[i] + ';border-radius:3px;cursor:pointer;' + (m.status==='進行中'?'border:1.5px solid #b87333':sel?'border:1px solid rgba(255,255,255,.35)':'border:0.5px solid transparent'),
+        nameStyle: 'font-size:12.5px;font-weight:500;color:' + PLTC[i] + ';white-space:nowrap',
+        pctStyle: "font-family:'Roboto Mono',monospace;font-size:11px;color:" + (m.progress===100?(i===0?'#525048':'#e8e7e4'):m.progress>0?'#f5ede3':'#8f8d88'),
+        badgeStyle: lBadge,
+        tasks: m.tasks.map((t, ti) => {
+          const key = i + '-' + ti;
+          const done = completedTasks[key];
+          const eff = done ? 'done' : t.state;
+          return {
+            label: t.label, dotStyle: taskDot[eff], textStyle: taskText[eff],
+            onClick: () => this.setState(s => { const ct={...s.completedTasks}; ct[key]=!ct[key]; return {completedTasks:ct}; })
+          };
+        })
+      };
+    });
+
+    // ---- calendar enhanced ----
+    const first = new Date(2026, 5, 1).getDay();
+    const dim = 30;
+    const maxHday = Math.max(...Object.values(this.HOURS_BY_DAY));
+    const calWeekdays = ['日', '月', '火', '水', '木', '金', '土'];
+    const calCells = [];
+    for (let i = 0; i < first; i++) calCells.push({ day:'', study:false, showHours:false, hoursStr:'', cellStyle:'aspect-ratio:1;border:0.5px solid transparent;border-radius:3px' });
+    for (let d = 1; d <= dim; d++) {
+      const h = this.HOURS_BY_DAY[d] || 0;
+      const alpha = h > 0 ? 0.11 + (h / maxHday) * 0.58 : 0;
+      const bg = h > 0 ? 'rgba(20,20,19,' + alpha.toFixed(2) + ')' : 'transparent';
+      const tc = alpha > 0.42 ? '#fff' : '#525048';
+      const border = d === 21 ? '1.5px solid #141413' : '0.5px solid #f0efec';
+      calCells.push({ day:d, study:h>0, showHours:h>0, hoursStr:h>0?h+'h':'',
+        cellStyle:"aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:3px;font-family:'Roboto Mono',monospace;font-size:11px;color:"+tc+";background:"+bg+";border:"+border });
+    }
+    const studyDayCount = Object.keys(this.HOURS_BY_DAY).length;
+    const hoursThisMonth = +Object.values(this.HOURS_BY_DAY).reduce((a,b)=>a+b,0).toFixed(1);
+    const calStats = [
+      { label:'学習日数', val:studyDayCount+'日', sub:'/ 30日' },
+      { label:'合計時間', val:hoursThisMonth+'h', sub:'今月累計' },
+      { label:'日平均', val:(hoursThisMonth/studyDayCount).toFixed(1)+'h', sub:'/ 学習日' },
+    ];
+    const upcomingEvents = this.EVENTS.map(e => ({
+      date:e.date, wd:e.wd, label:e.label, subject:e.subject,
+      tagStyle:'font-size:10px;padding:2px 9px;border-radius:3px;background:#f5f5f4;border:0.5px solid #e8e7e4;color:#525048;white-space:nowrap'
+    }));
+
+    // ---- learning log stats ----
+    const maxWeekH = Math.max(...this.WEEK.map(w=>w.h), 0.1);
+    const weekBars = this.WEEK.map(w => {
+      const barH = w.h > 0 ? Math.max(5, Math.round((w.h/maxWeekH)*74)) : 4;
+      const today = w.d === '日';
+      return {
+        d:w.d, h:w.h,
+        label: w.h > 0 ? w.h+'h' : '',
+        barStyle:'width:28px;border-radius:3px 3px 0 0;height:'+barH+'px;background:'+(today&&w.h>0?'#141413':w.h>0?'#c9c7c2':'#eeede9'),
+        labelStyle:"font-family:'Roboto Mono',monospace;font-size:10px;color:"+(w.h>0?'#141413':'#e8e7e4'),
+        dayStyle:'font-size:11px;'+(today?'color:#141413;font-weight:700':'color:#8f8d88')
+      };
+    });
+    const subjTotal = this.SUBJ_TOTALS.reduce((a,s)=>a+s.h,0);
+    const subjectBars = this.SUBJ_TOTALS.map(s => ({
+      name:s.name, h:s.h,
+      pct:Math.round(s.h/subjTotal*100),
+      barWidth:Math.round(s.h/subjTotal*100)+'%'
+    }));
+    const logStats = [
+      {label:'累計学習',    val:'142h'},
+      {label:'学習日数',   val:'48日'},
+      {label:'連続学習',   val:'12日'},
+      {label:'週平均',     val:'13.5h'},
+    ];
+    const logsEnh = this.LOGS.map(l => ({
+      date:l.date, subject:l.subject, topic:l.topic, hours:l.hours,
+      subjectStyle:'font-size:11px;color:#2c2b28;background:#f5f5f4;border:0.5px solid #d3d1cc;border-radius:3px;padding:3px 9px;flex:none;white-space:nowrap'
+    }));
+
+    // ---- tabs ----
+    const TABS = [['dashboard','ダッシュボード'],['roadmap','ロードマップ'],['calendar','カレンダー'],['log','学習記録']];
+    const tabBase = 'padding:12px 2px;font-size:13.5px;background:none;border:none;cursor:pointer;margin-bottom:-0.5px;transition:color .15s';
+    const tabs = TABS.map(([key, label]) => ({
+      label, active: tab === key,
+      style: tab === key
+        ? tabBase + ';font-weight:500;color:#141413;border-bottom:1.5px solid #141413'
+        : tabBase + ';font-weight:400;color:#8f8d88;border-bottom:1.5px solid transparent',
+      onClick: () => this.setTab(key)
+    }));
+
+    return {
+      isWelcome: phase==='welcome', isQa: phase==='qa', isResult: phase==='result', isDashboard: phase==='dashboard',
+      chips:this.CHIPS, startQa:()=>this.go('qa'), goDashboard:()=>this.go('dashboard'),
+      currentQuestions, progressPct, qNum: qaPage+1, advanceFn, advanceLabel, nextBtnStyle, showNextHint,
+      typeCards, radar, scoreBars, roadmap:this.ROADMAP,
+      tabs, isTabDash:tab==='dashboard', isTabRoadmap:tab==='roadmap', isTabCal:tab==='calendar', isTabLog:tab==='log',
+      timeline, heatRows, heatDays, calWeekdays, calCells,
+      result: resultInfo, resultKeywords, overallProgress, overallProgressWidth, kpiProgressSub, daysRemaining, dashboardTypeName,
+      restartFn:()=>this.restart(), backToWelcome:()=>this.go('welcome'), backToQa:()=>this.go('qa'),
+      roadmapCards, pyramidLayersRev, qaStepDots, calStats, upcomingEvents,
+      weekBars, subjectBars, logStats, logsEnh, logs:this.LOGS
+    };
+  }
+}
+</script>
+</body>
+</html>
