@@ -43,6 +43,9 @@
   .task-row:hover{background:rgba(0,0,0,.04)}
   .tab-btn{transition:color .15s}
 
+  /* ── tab content fade ── */
+  .tab-content{animation:fadeUp .18s ease both}
+
   /* ── responsive breakpoints ── */
   @media(max-width:700px){
     .kpi-grid{grid-template-columns:repeat(2,1fr) !important}
@@ -64,7 +67,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useCallback } = React;
+const { useState, useEffect } = React;
 
 // ─── design tokens ───────────────────────────────────────────────────────────
 const C = {
@@ -175,8 +178,8 @@ const WEEK = [{d:'月',h:2.5},{d:'火',h:3},{d:'水',h:1.5},{d:'木',h:0},{d:'�
 const SUBJ_TOTALS = [{name:'AWS',h:64},{name:'PM',h:46},{name:'英語',h:32}];
 
 // ─── utility helpers ──────────────────────────────────────────────────────────
-function mono(extra = '') {
-  return `font-family:'Roboto Mono',monospace;${extra}`;
+function mono(extra = {}) {
+  return {fontFamily:"'Roboto Mono',monospace", ...extra};
 }
 
 function daysUntil(year, month, day) {
@@ -264,7 +267,7 @@ function PhaseWelcome({ onStart }) {
 }
 
 // ─── Phase 2: Q&A ────────────────────────────────────────────────────────────
-function PhaseQa({ answers, onAnswer, onBack, onNext, onFinish }) {
+function PhaseQa({ answers, onAnswer, onBack, onFinish }) {
   const [page, setPage] = useState(0);
 
   const pageQs = QUESTIONS.filter(q => q.page === page);
@@ -665,7 +668,7 @@ function TabDashboard({ resultType, completedTasks, onToggleTask }) {
 }
 
 // ─── Tab: Roadmap ─────────────────────────────────────────────────────────────
-function TabRoadmap() {
+function TabRoadmap({ completedTasks, onToggleTask }) {
   return (
     <div>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:28}}>
@@ -676,7 +679,7 @@ function TabRoadmap() {
         <div style={{...mono(),fontSize:11,color:C.ink4}}>目標日：2027年4月15日</div>
       </div>
       <div style={{display:'flex',flexDirection:'column'}}>
-        {MILESTONES.map((m,i) => {
+        {MILESTONES.map((m,mi) => {
           const active = m.status==='進行中';
           const done   = m.status==='完了';
           const cardStyle = {
@@ -685,18 +688,23 @@ function TabRoadmap() {
             border: active ? `0.5px solid ${C.accent}` : `0.5px solid ${C.ink2}`,
             borderRadius:4,padding:'22px 24px',
           };
+          const miDone = m.tasks.reduce((s,t,ti) => {
+            const k = `${mi}-${ti}`;
+            return s + ((completedTasks.hasOwnProperty(k) ? completedTasks[k] : t.state==='done') ? 1 : 0);
+          }, 0);
+          const progPct = Math.round(miDone / m.tasks.length * 100);
           return (
             <div key={m.name} style={{display:'flex',gap:20,alignItems:'flex-start'}}>
               <div style={{display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0,paddingTop:24,width:13}}>
                 <span style={{width:11,height:11,borderRadius:99,display:'inline-block',flexShrink:0,
                   background:done?C.ink7:C.ink0,
                   border:done?`0.5px solid ${C.ink7}`:active?`1.5px solid ${C.accent}`:`0.5px solid ${C.ink3}`}}/>
-                {i<MILESTONES.length-1 && <span style={{width:0.5,flex:1,minHeight:52,background:C.ink2,display:'block'}}/>}
+                {mi<MILESTONES.length-1 && <span style={{width:0.5,flex:1,minHeight:52,background:C.ink2,display:'block'}}/>}
               </div>
               <div style={cardStyle}>
                 <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:12,marginBottom:6}}>
                   <div>
-                    <div style={{...mono(),fontSize:11,color:C.ink4,marginBottom:6}}>{String(i+1).padStart(2,'0')}</div>
+                    <div style={{...mono(),fontSize:11,color:C.ink4,marginBottom:6}}>{String(mi+1).padStart(2,'0')}</div>
                     <div style={{fontSize:15,fontWeight:700,color:m.status==='未着手'?C.ink4:C.ink7}}>{m.name}</div>
                   </div>
                   <span style={{
@@ -708,15 +716,21 @@ function TabRoadmap() {
                 </div>
                 <div style={{...mono(),fontSize:11,color:C.ink4,marginBottom:14}}>{m.period}</div>
                 <div style={{height:4,background:'#f0efec',borderRadius:99,overflow:'hidden',marginBottom:18}}>
-                  <div style={{height:'100%',background:C.ink7,borderRadius:99,width:`${m.progress}%`}}/>
+                  <div style={{height:'100%',background:C.ink7,borderRadius:99,width:`${progPct}%`,transition:'width .3s ease'}}/>
                 </div>
                 <div style={{display:'flex',flexDirection:'column',gap:10}}>
-                  {m.tasks.map(t => (
-                    <div key={t.label} style={{display:'flex',alignItems:'center',gap:12}}>
-                      <span style={TASK_DOT[t.state]}/>
-                      <span style={TASK_TEXT[t.state]}>{t.label}</span>
-                    </div>
-                  ))}
+                  {m.tasks.map((t,ti) => {
+                    const key = `${mi}-${ti}`;
+                    const toggled = completedTasks[key];
+                    const effDone = toggled !== undefined ? toggled : t.state === 'done';
+                    const dispState = effDone ? 'done' : t.state === 'current' ? 'current' : 'todo';
+                    return (
+                      <div key={ti} className="task-row" style={{display:'flex',alignItems:'center',gap:12,cursor:'pointer'}} onClick={() => onToggleTask(key, !effDone)}>
+                        <span style={TASK_DOT[dispState]}/>
+                        <span style={TASK_TEXT[dispState]}>{t.label}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -731,6 +745,8 @@ function TabRoadmap() {
 function TabCalendar() {
   const first = new Date(2026, 5, 1).getDay();
   const dim = 30;
+  const _now = new Date();
+  const todayD = (_now.getFullYear()===2026 && _now.getMonth()===5) ? _now.getDate() : -1;
   const maxH = Math.max(...Object.values(HOURS_BY_DAY));
   const studyDayCount = Object.keys(HOURS_BY_DAY).length;
   const hoursTotal = +Object.values(HOURS_BY_DAY).reduce((a,b)=>a+b,0).toFixed(1);
@@ -742,7 +758,7 @@ function TabCalendar() {
     const alpha = h > 0 ? 0.11 + (h/maxH)*0.58 : 0;
     const bg = h > 0 ? `rgba(20,20,19,${alpha.toFixed(2)})` : 'transparent';
     const tc = alpha > 0.42 ? C.ink0 : C.ink5;
-    const border = d===21 ? `1.5px solid ${C.ink7}` : `0.5px solid #f0efec`;
+    const border = d===todayD ? `1.5px solid ${C.ink7}` : `0.5px solid #f0efec`;
     calCells.push({d,h,bg,tc,border});
   }
 
@@ -793,7 +809,7 @@ function TabCalendar() {
           <span style={{fontSize:11,color:C.ink4}}>学習時間（少 → 多）</span>
           <div style={{display:'flex',alignItems:'center',gap:5,marginLeft:8}}>
             <span style={{width:9,height:9,borderRadius:99,border:`1.5px solid ${C.ink7}`,display:'inline-block'}}/>
-            <span style={{fontSize:11,color:C.ink5}}>今日 (6/21)</span>
+            <span style={{fontSize:11,color:C.ink5}}>{todayD>0 ? `今日 (6/${todayD})` : '今日'}</span>
           </div>
         </div>
       </div>
@@ -992,10 +1008,12 @@ function PhaseDashboard({ resultType, completedTasks, onToggleTask, onRestart })
       </div>
 
       {/* tab content */}
-      {tab==='dashboard' && <TabDashboard resultType={resultType} completedTasks={completedTasks} onToggleTask={onToggleTask}/>}
-      {tab==='roadmap'   && <TabRoadmap/>}
-      {tab==='calendar'  && <TabCalendar/>}
-      {tab==='log'       && <TabLog/>}
+      <div key={tab} className="tab-content">
+        {tab==='dashboard' && <TabDashboard resultType={resultType} completedTasks={completedTasks} onToggleTask={onToggleTask}/>}
+        {tab==='roadmap'   && <TabRoadmap completedTasks={completedTasks} onToggleTask={onToggleTask}/>}
+        {tab==='calendar'  && <TabCalendar/>}
+        {tab==='log'       && <TabLog/>}
+      </div>
     </div>
   );
 }
