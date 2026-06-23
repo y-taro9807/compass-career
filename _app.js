@@ -1,9 +1,14 @@
+/* @jsxRuntime classic */
 const {
   useState,
-  useEffect
+  useEffect,
+  useMemo,
+  useRef
 } = React;
 
-// ─── design tokens ───────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// design tokens
+// ═══════════════════════════════════════════════════════════════════════════
 const C = {
   ink7: '#141413',
   ink6: '#2c2b28',
@@ -14,10 +19,68 @@ const C = {
   ink1: '#f5f5f4',
   ink0: '#ffffff',
   accent: '#b87333',
-  accentLight: '#f5ede3'
+  accentLight: '#f5ede3',
+  danger: '#9a3b3b'
 };
+function mono(extra = {}) {
+  return {
+    fontFamily: "'Roboto Mono',monospace",
+    ...extra
+  };
+}
 
-// ─── static data ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// helpers
+// ═══════════════════════════════════════════════════════════════════════════
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const pad2 = n => String(n).padStart(2, '0');
+function ymd(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+function todayISO() {
+  return ymd(new Date());
+}
+function parseISO(s) {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+function fmtLogDate(iso) {
+  const d = parseISO(iso);
+  return `${pad2(d.getMonth() + 1)} / ${pad2(d.getDate())}`;
+}
+function fmtFull(iso) {
+  const d = parseISO(iso);
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+}
+const WD_JP = ['日', '月', '火', '水', '木', '金', '土'];
+function weekdayJP(iso) {
+  return WD_JP[parseISO(iso).getDay()];
+}
+function daysUntil(iso) {
+  if (!iso) return 0;
+  return Math.max(0, Math.ceil((parseISO(iso) - startOfDay(new Date())) / 86400000));
+}
+function startOfDay(d) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+function mondayOf(d) {
+  const x = startOfDay(d);
+  const wd = (x.getDay() + 6) % 7;
+  x.setDate(x.getDate() - wd);
+  return x;
+}
+function addDays(d, n) {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+}
+const round1 = n => Math.round(n * 10) / 10;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// diagnosis fixed data
+// ═══════════════════════════════════════════════════════════════════════════
 const CHIPS = [{
   shape: 'T',
   name: 'T型',
@@ -248,98 +311,6 @@ const ALL_TYPES = [{
   desc: '幅広い視野と俯瞰力で組織・事業を率いるリーダー型。',
   key: '━'
 }];
-const MILESTONES = [{
-  name: '自己分析・キャリアタイプ診断',
-  status: '完了',
-  progress: 100,
-  period: '2025.09',
-  tasks: [{
-    label: '価値観の棚卸し',
-    state: 'done'
-  }, {
-    label: 'キャリアタイプ診断',
-    state: 'done'
-  }, {
-    label: '強み・弱みの整理',
-    state: 'done'
-  }]
-}, {
-  name: '業界知識・人脈形成',
-  status: '完了',
-  progress: 100,
-  period: '2025.10 – 2025.12',
-  tasks: [{
-    label: '業界研究レポート作成',
-    state: 'done'
-  }, {
-    label: '勉強会・イベント参加 ×3',
-    state: 'done'
-  }, {
-    label: 'メンター獲得',
-    state: 'done'
-  }]
-}, {
-  name: '資格取得・スキル証明',
-  status: '進行中',
-  progress: 45,
-  period: '2026.01 – 2026.06',
-  tasks: [{
-    label: 'AWS SAA 認定取得',
-    state: 'done'
-  }, {
-    label: 'PMP 試験対策',
-    state: 'current'
-  }, {
-    label: 'TOEIC 800点',
-    state: 'todo'
-  }]
-}, {
-  name: '転職活動・書類／面接',
-  status: '未着手',
-  progress: 0,
-  period: '2026.07 – 2026.09',
-  tasks: [{
-    label: '職務経歴書・レジュメ作成',
-    state: 'todo'
-  }, {
-    label: 'ポートフォリオ整備',
-    state: 'todo'
-  }, {
-    label: '模擬面接 ×5',
-    state: 'todo'
-  }]
-}, {
-  name: 'PM転職・内定獲得',
-  status: '未着手',
-  progress: 0,
-  period: '2026.10 –',
-  tasks: [{
-    label: '企業エントリー',
-    state: 'todo'
-  }, {
-    label: '選考・面接',
-    state: 'todo'
-  }, {
-    label: '内定獲得・意思決定',
-    state: 'todo'
-  }]
-}];
-const TIMELINE = [{
-  name: '自己分析・キャリアタイプ診断',
-  status: '完了'
-}, {
-  name: '業界知識・人脈形成',
-  status: '完了'
-}, {
-  name: '資格取得・スキル証明',
-  status: '進行中'
-}, {
-  name: '転職活動・書類／面接',
-  status: '未着手'
-}, {
-  name: 'PM転職・内定獲得',
-  status: '未着手'
-}];
 const ROADMAP_STEPS = [{
   step: '01',
   title: '資格取得でスキルを可視化',
@@ -353,133 +324,6 @@ const ROADMAP_STEPS = [{
   title: 'PM内定を獲得',
   desc: '面接対策を重ね、目標ポジションでの内定獲得を目指す。'
 }];
-const HEAT = [{
-  subject: 'AWS',
-  cells: [2, 3, 1, 0, 2, 3]
-}, {
-  subject: '英語',
-  cells: [1, 1, 2, 2, 1, 0]
-}, {
-  subject: 'PM',
-  cells: [0, 2, 3, 1, 2, 1]
-}];
-const LOGS = [{
-  date: '06 / 19',
-  subject: 'AWS',
-  topic: 'VPC・ネットワーク設計',
-  hours: '2.5h'
-}, {
-  date: '06 / 18',
-  subject: 'PM',
-  topic: 'アジャイル開発の基礎',
-  hours: '1.5h'
-}, {
-  date: '06 / 17',
-  subject: '英語',
-  topic: 'ビジネス英会話 ロールプレイ',
-  hours: '1.0h'
-}, {
-  date: '06 / 16',
-  subject: 'AWS',
-  topic: 'IAM・セキュリティ設計',
-  hours: '2.0h'
-}, {
-  date: '06 / 15',
-  subject: 'PM',
-  topic: '要件定義の進め方',
-  hours: '1.5h'
-}, {
-  date: '06 / 14',
-  subject: 'AWS',
-  topic: 'EC2・オートスケーリング',
-  hours: '2.0h'
-}, {
-  date: '06 / 12',
-  subject: '英語',
-  topic: '技術ドキュメント読解',
-  hours: '1.0h'
-}];
-const EVENTS = [{
-  date: '06 / 25',
-  wd: '水',
-  label: 'AWS SAA 模擬試験',
-  subject: 'AWS'
-}, {
-  date: '06 / 28',
-  wd: '土',
-  label: 'PM勉強会 #12 登壇',
-  subject: 'PM'
-}, {
-  date: '07 / 02',
-  wd: '木',
-  label: 'メンター面談',
-  subject: '面談'
-}, {
-  date: '07 / 10',
-  wd: '金',
-  label: '職務経歴書ドラフト締切',
-  subject: '転職'
-}];
-const HOURS_BY_DAY = {
-  2: 2,
-  4: 1.5,
-  5: 3,
-  8: 2,
-  9: 1,
-  11: 2.5,
-  12: 3,
-  15: 1.5,
-  16: 2,
-  18: 1,
-  19: 2.5,
-  21: 3,
-  23: 2,
-  24: 1.5,
-  26: 2.5
-};
-const WEEK = [{
-  d: '月',
-  h: 2.5
-}, {
-  d: '火',
-  h: 3
-}, {
-  d: '水',
-  h: 1.5
-}, {
-  d: '木',
-  h: 0
-}, {
-  d: '金',
-  h: 2
-}, {
-  d: '土',
-  h: 3
-}, {
-  d: '日',
-  h: 1.5
-}];
-const SUBJ_TOTALS = [{
-  name: 'AWS',
-  h: 64
-}, {
-  name: 'PM',
-  h: 46
-}, {
-  name: '英語',
-  h: 32
-}];
-
-// ─── utility helpers ──────────────────────────────────────────────────────────
-function mono(extra = {}) {
-  return {
-    fontFamily: "'Roboto Mono',monospace",
-    ...extra
-  };
-}
-function daysUntil(year, month, day) {
-  return Math.max(0, Math.ceil((new Date(year, month - 1, day) - new Date()) / 86400000));
-}
 function calcResultType(answers) {
   const scores = {
     T: 0,
@@ -489,13 +333,485 @@ function calcResultType(answers) {
     '━': 0
   };
   Object.entries(answers).forEach(([qid, idx]) => {
-    const t = TM[qid]?.[idx];
+    const t = TM[qid] && TM[qid][idx];
     if (t && scores.hasOwnProperty(t)) scores[t]++;
   });
   return Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0];
 }
 
-// ─── TopBar ──────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// storage + seed
+// ═══════════════════════════════════════════════════════════════════════════
+const STORE_KEY = 'compass-v2';
+const SCHEMA_VERSION = 2;
+function makeSeed() {
+  const sAws = uid(),
+    sPm = uid(),
+    sEng = uid();
+  const today = new Date();
+  const log = (back, subjectId, topic, hours) => ({
+    id: uid(),
+    date: ymd(addDays(today, -back)),
+    subjectId,
+    topic,
+    hours
+  });
+  return {
+    version: SCHEMA_VERSION,
+    profile: {
+      name: ''
+    },
+    onboarded: false,
+    diagnosis: {
+      answers: {},
+      resultType: null
+    },
+    goal: {
+      title: 'PMへの転職',
+      targetDate: ymd(addDays(today, 300))
+    },
+    subjects: [{
+      id: sAws,
+      name: 'AWS'
+    }, {
+      id: sPm,
+      name: 'PM'
+    }, {
+      id: sEng,
+      name: '英語'
+    }],
+    milestones: [{
+      id: uid(),
+      name: '自己分析・キャリアタイプ診断',
+      period: 'フェーズ1',
+      tasks: [{
+        id: uid(),
+        label: '価値観の棚卸し',
+        done: true
+      }, {
+        id: uid(),
+        label: 'キャリアタイプ診断',
+        done: true
+      }, {
+        id: uid(),
+        label: '強み・弱みの整理',
+        done: true
+      }]
+    }, {
+      id: uid(),
+      name: '業界知識・人脈形成',
+      period: 'フェーズ2',
+      tasks: [{
+        id: uid(),
+        label: '業界研究レポート作成',
+        done: true
+      }, {
+        id: uid(),
+        label: '勉強会・イベント参加 ×3',
+        done: true
+      }, {
+        id: uid(),
+        label: 'メンター獲得',
+        done: true
+      }]
+    }, {
+      id: uid(),
+      name: '資格取得・スキル証明',
+      period: 'フェーズ3',
+      tasks: [{
+        id: uid(),
+        label: 'AWS SAA 認定取得',
+        done: true
+      }, {
+        id: uid(),
+        label: 'PMP 試験対策',
+        done: false
+      }, {
+        id: uid(),
+        label: 'TOEIC 800点',
+        done: false
+      }]
+    }, {
+      id: uid(),
+      name: '転職活動・書類／面接',
+      period: 'フェーズ4',
+      tasks: [{
+        id: uid(),
+        label: '職務経歴書・レジュメ作成',
+        done: false
+      }, {
+        id: uid(),
+        label: 'ポートフォリオ整備',
+        done: false
+      }, {
+        id: uid(),
+        label: '模擬面接 ×5',
+        done: false
+      }]
+    }, {
+      id: uid(),
+      name: '内定獲得・意思決定',
+      period: 'フェーズ5',
+      tasks: [{
+        id: uid(),
+        label: '企業エントリー',
+        done: false
+      }, {
+        id: uid(),
+        label: '選考・面接',
+        done: false
+      }, {
+        id: uid(),
+        label: '内定獲得・意思決定',
+        done: false
+      }]
+    }],
+    logs: [log(0, sAws, 'VPC・ネットワーク設計', 2.5), log(1, sPm, 'アジャイル開発の基礎', 1.5), log(2, sEng, 'ビジネス英会話 ロールプレイ', 1.0), log(3, sAws, 'IAM・セキュリティ設計', 2.0), log(4, sPm, '要件定義の進め方', 1.5), log(6, sAws, 'EC2・オートスケーリング', 2.0)],
+    events: [{
+      id: uid(),
+      date: ymd(addDays(today, 2)),
+      label: 'AWS SAA 模擬試験',
+      subjectId: sAws
+    }, {
+      id: uid(),
+      date: ymd(addDays(today, 5)),
+      label: 'PM勉強会 登壇',
+      subjectId: sPm
+    }, {
+      id: uid(),
+      date: ymd(addDays(today, 12)),
+      label: 'メンター面談',
+      subjectId: null
+    }]
+  };
+}
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (s && s.version === SCHEMA_VERSION) return s;
+  } catch (e) {}
+  return null;
+}
+function saveState(s) {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(s));
+  } catch (e) {}
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// derived stats
+// ═══════════════════════════════════════════════════════════════════════════
+function computeStats(state) {
+  const {
+    logs,
+    subjects,
+    milestones
+  } = state;
+  const dateSet = new Set(logs.map(l => l.date));
+  const totalHours = round1(logs.reduce((a, l) => a + (+l.hours || 0), 0));
+  const studyDays = dateSet.size;
+
+  // streak (today, with one-day grace if today not yet logged)
+  let streak = 0;
+  let cur = startOfDay(new Date());
+  if (!dateSet.has(ymd(cur))) cur = addDays(cur, -1);
+  while (dateSet.has(ymd(cur))) {
+    streak++;
+    cur = addDays(cur, -1);
+  }
+
+  // subject totals
+  const bySubj = {};
+  logs.forEach(l => {
+    bySubj[l.subjectId] = (bySubj[l.subjectId] || 0) + (+l.hours || 0);
+  });
+  const subjectTotals = subjects.map(s => ({
+    id: s.id,
+    name: s.name,
+    h: round1(bySubj[s.id] || 0)
+  })).filter(s => s.h > 0).sort((a, b) => b.h - a.h);
+
+  // hours by date map (for calendar)
+  const hoursByDate = {};
+  logs.forEach(l => {
+    hoursByDate[l.date] = round1((hoursByDate[l.date] || 0) + (+l.hours || 0));
+  });
+
+  // this week (Mon–Sun)
+  const monday = mondayOf(new Date());
+  const week = [];
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(monday, i);
+    week.push({
+      d: WD_JP[d.getDay()],
+      iso: ymd(d),
+      h: round1(hoursByDate[ymd(d)] || 0)
+    });
+  }
+  const weekTotal = round1(week.reduce((a, w) => a + w.h, 0));
+  // last week
+  const lastMon = addDays(monday, -7);
+  let lastWeekTotal = 0;
+  for (let i = 0; i < 7; i++) lastWeekTotal += hoursByDate[ymd(addDays(lastMon, i))] || 0;
+  lastWeekTotal = round1(lastWeekTotal);
+
+  // weekly average across weeks that have data
+  const weekSums = {};
+  logs.forEach(l => {
+    const k = ymd(mondayOf(parseISO(l.date)));
+    weekSums[k] = (weekSums[k] || 0) + (+l.hours || 0);
+  });
+  const weekKeys = Object.keys(weekSums);
+  const weekAvg = weekKeys.length ? round1(weekKeys.reduce((a, k) => a + weekSums[k], 0) / weekKeys.length) : 0;
+
+  // milestone progress + status
+  const ms = milestones.map(m => {
+    const total = m.tasks.length;
+    const done = m.tasks.filter(t => t.done).length;
+    const pct = total ? Math.round(done / total * 100) : 0;
+    return {
+      ...m,
+      total,
+      done,
+      pct
+    };
+  });
+  let currentAssigned = false;
+  ms.forEach(m => {
+    if (m.pct === 100) m.status = '完了';else if (!currentAssigned) {
+      m.status = '進行中';
+      currentAssigned = true;
+    } else m.status = '未着手';
+  });
+  const totalTasks = ms.reduce((a, m) => a + m.total, 0);
+  const doneTasks = ms.reduce((a, m) => a + m.done, 0);
+  const overallPct = totalTasks ? Math.round(doneTasks / totalTasks * 100) : 0;
+  return {
+    totalHours,
+    studyDays,
+    streak,
+    subjectTotals,
+    hoursByDate,
+    week,
+    weekTotal,
+    lastWeekTotal,
+    weekAvg,
+    milestones: ms,
+    totalTasks,
+    doneTasks,
+    overallPct
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// generic UI primitives
+// ═══════════════════════════════════════════════════════════════════════════
+function Btn({
+  variant = 'secondary',
+  children,
+  style,
+  ...rest
+}) {
+  const base = {
+    padding: '10px 18px',
+    borderRadius: 3,
+    fontSize: 13.5,
+    fontWeight: 500,
+    letterSpacing: '.04em',
+    transition: 'background .15s,border-color .15s,opacity .15s'
+  };
+  const styles = {
+    primary: {
+      ...base,
+      background: C.ink7,
+      color: C.ink0,
+      border: 'none'
+    },
+    secondary: {
+      ...base,
+      background: C.ink0,
+      color: C.ink6,
+      border: `0.5px solid ${C.ink3}`
+    },
+    ghost: {
+      ...base,
+      background: 'none',
+      color: C.ink4,
+      border: 'none'
+    },
+    danger: {
+      ...base,
+      background: 'none',
+      color: C.danger,
+      border: `0.5px solid ${C.danger}`
+    }
+  };
+  const cls = variant === 'primary' ? 'btn-primary' : variant === 'secondary' ? 'btn-secondary' : variant === 'danger' ? 'btn-danger' : 'btn-ghost';
+  return /*#__PURE__*/React.createElement("button", {
+    className: cls,
+    style: {
+      ...styles[variant],
+      ...style
+    },
+    ...rest
+  }, children);
+}
+function IconBtn({
+  label,
+  onClick,
+  danger
+}) {
+  return /*#__PURE__*/React.createElement("button", {
+    className: "icon-btn",
+    onClick: onClick,
+    title: label,
+    style: {
+      background: 'none',
+      border: `0.5px solid ${C.ink2}`,
+      borderRadius: 3,
+      padding: '4px 9px',
+      fontSize: 11,
+      color: danger ? C.danger : C.ink5
+    }
+  }, label);
+}
+function Modal({
+  title,
+  onClose,
+  children,
+  footer,
+  wide
+}) {
+  useEffect(() => {
+    const onKey = e => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  return /*#__PURE__*/React.createElement("div", {
+    onClick: onClose,
+    style: {
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(20,20,19,.42)',
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'center',
+      padding: '7vh 16px 16px',
+      zIndex: 50,
+      overflowY: 'auto'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "modal-card",
+    onClick: e => e.stopPropagation(),
+    style: {
+      background: C.ink0,
+      borderRadius: 6,
+      width: '100%',
+      maxWidth: wide ? 620 : 460,
+      boxShadow: '0 12px 40px rgba(0,0,0,.16)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '18px 22px',
+      borderBottom: `0.5px solid ${C.ink2}`
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 15,
+      fontWeight: 700,
+      color: C.ink7
+    }
+  }, title), /*#__PURE__*/React.createElement("button", {
+    onClick: onClose,
+    style: {
+      background: 'none',
+      border: 'none',
+      fontSize: 18,
+      color: C.ink4,
+      lineHeight: 1,
+      padding: 4
+    }
+  }, "×")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '22px'
+    }
+  }, children), footer && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: 10,
+      padding: '16px 22px',
+      borderTop: `0.5px solid ${C.ink2}`
+    }
+  }, footer)));
+}
+const fieldLabel = {
+  display: 'block',
+  fontSize: 11,
+  color: C.ink4,
+  marginBottom: 7,
+  letterSpacing: '.03em'
+};
+const inputStyle = {
+  width: '100%',
+  padding: '10px 12px',
+  fontSize: 14,
+  color: C.ink7,
+  background: C.ink0,
+  border: `0.5px solid ${C.ink3}`,
+  borderRadius: 3,
+  fontFamily: 'inherit'
+};
+function Field({
+  label,
+  children
+}) {
+  return /*#__PURE__*/React.createElement("label", {
+    style: {
+      display: 'block',
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: fieldLabel
+  }, label), children);
+}
+function ConfirmDialog({
+  title,
+  message,
+  confirmLabel = '削除する',
+  onConfirm,
+  onClose
+}) {
+  return /*#__PURE__*/React.createElement(Modal, {
+    title: title,
+    onClose: onClose,
+    footer: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Btn, {
+      variant: "ghost",
+      onClick: onClose
+    }, "キャンセル"), /*#__PURE__*/React.createElement(Btn, {
+      variant: "danger",
+      onClick: () => {
+        onConfirm();
+        onClose();
+      }
+    }, confirmLabel))
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13.5,
+      lineHeight: 1.8,
+      color: C.ink5
+    }
+  }, message));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TopBar
+// ═══════════════════════════════════════════════════════════════════════════
 function TopBar() {
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -531,9 +847,12 @@ function TopBar() {
   }, "キャリアプラン"));
 }
 
-// ─── Phase 1: Welcome ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// Onboarding — Welcome
+// ═══════════════════════════════════════════════════════════════════════════
 function PhaseWelcome({
-  onStart
+  onStart,
+  onSkip
 }) {
   return /*#__PURE__*/React.createElement("div", {
     className: "phase",
@@ -558,13 +877,12 @@ function PhaseWelcome({
       border: on ? 'none' : `0.5px solid ${C.ink3}`
     }
   }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 11,
       letterSpacing: '.16em',
       color: C.ink4,
       marginBottom: 14
-    }
+    })
   }, "STEP 1 ／ キャリアタイプ診断"), /*#__PURE__*/React.createElement("h1", {
     style: {
       fontSize: 30,
@@ -601,8 +919,8 @@ function PhaseWelcome({
     sub: '5分類から\nあなたの型を特定'
   }, {
     n: '03',
-    title: 'ロードマップ',
-    sub: '目標への\n最適ルートを提案'
+    title: '運用スタート',
+    sub: '目標・学習を\n日々記録して管理'
   }].map((s, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
@@ -611,12 +929,11 @@ function PhaseWelcome({
       borderRight: i < 2 ? `0.5px solid ${C.ink2}` : 'none'
     }
   }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 11,
       color: C.accent,
       marginBottom: 9
-    }
+    })
   }, s.n), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12.5,
@@ -632,19 +949,18 @@ function PhaseWelcome({
       whiteSpace: 'pre-line'
     }
   }, s.sub)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 10,
       letterSpacing: '.14em',
       color: C.ink4,
       marginBottom: 14
-    }
+    })
   }, "診断タイプ ／ 5 TYPES"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column',
       gap: 8,
-      marginBottom: 40
+      marginBottom: 36
     }
   }, CHIPS.map(c => /*#__PURE__*/React.createElement("div", {
     key: c.name,
@@ -658,8 +974,7 @@ function PhaseWelcome({
       borderRadius: 3
     }
   }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 18,
       fontWeight: 700,
       color: C.ink7,
@@ -667,7 +982,7 @@ function PhaseWelcome({
       width: 22,
       textAlign: 'center',
       lineHeight: 1
-    }
+    })
   }, c.shape), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
@@ -690,24 +1005,31 @@ function PhaseWelcome({
       color: C.ink3,
       whiteSpace: 'nowrap'
     }
-  }, c.tag)))), /*#__PURE__*/React.createElement("button", {
-    className: "btn-primary",
+  }, c.tag)))), /*#__PURE__*/React.createElement(Btn, {
+    variant: "primary",
     onClick: onStart,
     style: {
       width: '100%',
       padding: 17,
-      background: C.ink7,
-      color: C.ink0,
-      border: 'none',
-      borderRadius: 3,
-      fontSize: 14.5,
-      fontWeight: 500,
-      letterSpacing: '.06em'
+      fontSize: 14.5
     }
-  }, "診断をはじめる"));
+  }, "診断をはじめる"), /*#__PURE__*/React.createElement("button", {
+    onClick: onSkip,
+    style: {
+      display: 'block',
+      width: '100%',
+      marginTop: 14,
+      background: 'none',
+      border: 'none',
+      fontSize: 12.5,
+      color: C.ink4
+    }
+  }, "診断をスキップして使う →"));
 }
 
-// ─── Phase 2: Q&A ────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// Onboarding — Q&A
+// ═══════════════════════════════════════════════════════════════════════════
 function PhaseQa({
   answers,
   onAnswer,
@@ -724,9 +1046,7 @@ function PhaseQa({
     if (page === 0) {
       setPage(1);
       window.scrollTo(0, 0);
-    } else {
-      onFinish();
-    }
+    } else onFinish();
   }
   function goBack() {
     if (page === 1) {
@@ -755,8 +1075,7 @@ function PhaseQa({
     border: `0.5px solid ${C.ink7}`,
     color: C.ink0
   };
-  const labBase = {
-    ...mono(),
+  const labBase = mono({
     fontSize: 11,
     flexShrink: 0,
     width: 24,
@@ -767,7 +1086,7 @@ function PhaseQa({
     alignItems: 'center',
     justifyContent: 'center',
     color: C.ink4
-  };
+  });
   const labSel = {
     ...labBase,
     border: '0.5px solid rgba(255,255,255,.6)',
@@ -800,12 +1119,11 @@ function PhaseQa({
       marginBottom: 11
     }
   }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 11,
       letterSpacing: '.14em',
       color: C.ink4
-    }
+    })
   }, "STEP 2 ／ 診断 Q&A"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -846,13 +1164,12 @@ function PhaseQa({
   }, pageQs.map((q, pi) => /*#__PURE__*/React.createElement("div", {
     key: q.id
   }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 10,
       color: C.ink4,
       letterSpacing: '.12em',
       marginBottom: 8
-    }
+    })
   }, "Q", page * 2 + pi + 1, " / 4"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 17,
@@ -914,7 +1231,9 @@ function PhaseQa({
   }, "すべての質問に答えると進めます")));
 }
 
-// ─── Radar chart ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// Radar chart
+// ═══════════════════════════════════════════════════════════════════════════
 function RadarChart({
   type
 }) {
@@ -974,7 +1293,9 @@ function RadarChart({
   }, l.name)));
 }
 
-// ─── Phase 3: Result ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// Onboarding — Result
+// ═══════════════════════════════════════════════════════════════════════════
 function PhaseResult({
   answers,
   onDashboard,
@@ -985,8 +1306,6 @@ function PhaseResult({
   const info = TYPE_RESULTS[resultType] || TYPE_RESULTS['T'];
   const matches = TYPE_MATCHES[resultType] || TYPE_MATCHES['T'];
   const scores = SCORES_BY_TYPE[resultType] || SCORES_BY_TYPE['T'];
-
-  // sort type cards: mine first, then descending by match
   const typeCards = ALL_TYPES.map(t => ({
     ...t,
     mine: t.key === resultType,
@@ -1017,13 +1336,12 @@ function PhaseResult({
       marginBottom: 46
     }
   }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 11,
       letterSpacing: '.16em',
       color: C.ink4,
       marginBottom: 16
-    }
+    })
   }, "STEP 3 ／ 診断結果"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'inline-flex',
@@ -1035,11 +1353,10 @@ function PhaseResult({
       marginBottom: 20
     }
   }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 12,
       color: C.ink4
-    }
+    })
   }, "RESULT"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 14,
@@ -1130,13 +1447,12 @@ function PhaseResult({
         whiteSpace: 'nowrap'
       }
     }, "あなたのタイプ"), /*#__PURE__*/React.createElement("span", {
-      style: {
-        ...mono(),
+      style: mono({
         fontWeight: 500,
         marginLeft: 'auto',
         fontSize: mine ? 18 : 14,
         color: mine ? C.ink0 : C.ink4
-      }
+      })
     }, t.matchVal, "%")), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12.5,
@@ -1186,13 +1502,12 @@ function PhaseResult({
       gap: 15
     }
   }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 10,
       letterSpacing: '.12em',
       color: C.ink4,
       marginBottom: 2
-    }
+    })
   }, "ABILITY SCORE"), scores.map(s => /*#__PURE__*/React.createElement("div", {
     key: s.name
   }, /*#__PURE__*/React.createElement("div", {
@@ -1207,11 +1522,10 @@ function PhaseResult({
       color: C.ink6
     }
   }, s.name), /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 12,
       color: C.ink7
-    }
+    })
   }, s.v)), /*#__PURE__*/React.createElement("div", {
     style: {
       height: 5,
@@ -1231,13 +1545,12 @@ function PhaseResult({
       marginBottom: 44
     }
   }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 10,
       letterSpacing: '.12em',
       color: C.ink4,
       marginBottom: 16
-    }
+    })
   }, "推奨ロードマップ ／ ROADMAP"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -1256,13 +1569,12 @@ function PhaseResult({
       padding: '20px 24px'
     }
   }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 13,
       color: C.accent,
       flexShrink: 0,
       paddingTop: 2
-    }
+    })
   }, "STEP ", r.step), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 15,
@@ -1282,19 +1594,13 @@ function PhaseResult({
       flexDirection: 'column',
       gap: 10
     }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn-primary",
+  }, /*#__PURE__*/React.createElement(Btn, {
+    variant: "primary",
     onClick: onDashboard,
     style: {
       width: '100%',
       padding: 17,
-      background: C.ink7,
-      color: C.ink0,
-      border: 'none',
-      borderRadius: 3,
-      fontSize: 14.5,
-      fontWeight: 500,
-      letterSpacing: '.06em'
+      fontSize: 14.5
     }
   }, "ダッシュボードへ進む"), /*#__PURE__*/React.createElement("button", {
     className: "btn-secondary",
@@ -1311,7 +1617,9 @@ function PhaseResult({
   }, "もう一度診断する")));
 }
 
-// ─── Dashboard helpers ────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// task dot/text styles
+// ═══════════════════════════════════════════════════════════════════════════
 const TASK_DOT = {
   done: {
     display: 'inline-block',
@@ -1356,28 +1664,82 @@ const TASK_TEXT = {
     color: C.ink4
   }
 };
+function statusBadge(status, onDark, baseIdx) {
+  if (status === '進行中') return {
+    background: C.accentLight,
+    color: C.accent,
+    fontWeight: 500
+  };
+  if (status === '完了') return {
+    border: `0.5px solid ${onDark ? 'rgba(255,255,255,.45)' : C.ink3}`,
+    color: onDark ? C.ink0 : C.ink4
+  };
+  return {
+    border: `0.5px solid ${onDark ? 'rgba(255,255,255,.22)' : C.ink2}`,
+    color: onDark ? C.ink4 : C.ink3
+  };
+}
 
-// ─── Tab: Dashboard ───────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// Dashboard tab
+// ═══════════════════════════════════════════════════════════════════════════
 function TabDashboard({
-  resultType,
-  completedTasks,
+  state,
+  stats,
   onToggleTask
 }) {
   const [selectedLayer, setSelectedLayer] = useState(null);
-  const totalTasks = MILESTONES.reduce((a, m) => a + m.tasks.length, 0);
-  const doneTasks = MILESTONES.reduce((sum, m, mi) => sum + m.tasks.reduce((s, t, ti) => {
-    const k = `${mi}-${ti}`;
-    const done = completedTasks.hasOwnProperty(k) ? completedTasks[k] : t.state === 'done';
-    return s + (done ? 1 : 0);
-  }, 0), 0);
-  const overallPct = Math.round(doneTasks / totalTasks * 100);
+  const ms = stats.milestones;
+  const n = ms.length;
 
-  // pyramid (reversed: top layer first)
-  const PLW = ['100%', '85%', '70%', '52%', '36%'];
-  const PLBG = ['#c9c7c2', '#888780', '#525048', '#2c2b28', '#141413'];
-  const PLTC = ['#2c2b28', '#fff', '#fff', '#fff', '#fff'];
-  const PLPAD = [24, 22, 20, 18, 16];
+  // pyramid geometry (variable layer count)
+  const widthAt = i => {
+    // i: 0=base ... n-1=apex
+    if (n <= 1) return '100%';
+    const w = 100 - (100 - 36) * (i / (n - 1));
+    return w.toFixed(0) + '%';
+  };
+  const shade = i => {
+    // base lightest → apex darkest
+    const cols = ['#c9c7c2', '#a8a6a0', '#888780', '#525048', '#2c2b28', '#141413'];
+    if (n === 1) return cols[5];
+    const idx = Math.round(i / (n - 1) * (cols.length - 1));
+    return cols[idx];
+  };
+
+  // heatmap: this week, per subject × weekday (Mon–Sun)
+  const monday = mondayOf(new Date());
+  const weekDates = [];
+  for (let i = 0; i < 6; i++) weekDates.push(ymd(addDays(monday, i)));
+  const subjForHeat = state.subjects.slice(0, 3);
+  const heatMax = 3;
   const HC = ['#eeede9', '#d3d1cc', '#8f8d88', '#2c2b28'];
+  const lvl = h => h <= 0 ? 0 : h < 1.5 ? 1 : h < 3 ? 2 : 3;
+  function subjHoursOn(subjId, iso) {
+    return state.logs.filter(l => l.subjectId === subjId && l.date === iso).reduce((a, l) => a + (+l.hours || 0), 0);
+  }
+  const KPI = [{
+    label: '全体進捗',
+    main: stats.overallPct,
+    unit: '%',
+    sub: `${stats.doneTasks} / ${stats.totalTasks} タスク完了`,
+    hasBar: true
+  }, {
+    label: '累計学習',
+    main: stats.totalHours,
+    unit: 'h',
+    sub: `先週 ${stats.lastWeekTotal}h → 今週 ${stats.weekTotal}h`
+  }, {
+    label: '残タスク',
+    main: stats.totalTasks - stats.doneTasks,
+    unit: '件',
+    sub: '進行中・未着手タスク'
+  }, {
+    label: '連続学習',
+    main: stats.streak,
+    unit: '日',
+    sub: stats.streak > 0 ? '継続中' : '今日から再開しよう'
+  }];
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "kpi-grid",
     style: {
@@ -1386,28 +1748,7 @@ function TabDashboard({
       gap: 12,
       marginBottom: 24
     }
-  }, [{
-    label: '全体進捗',
-    main: overallPct,
-    unit: '%',
-    sub: `${doneTasks} / ${totalTasks} タスク完了`,
-    hasBar: true
-  }, {
-    label: '累計学習',
-    main: '142',
-    unit: 'h',
-    sub: '先週比 +9.5h'
-  }, {
-    label: '残タスク',
-    main: totalTasks - doneTasks,
-    unit: '件',
-    sub: '進行中・未着手タスク'
-  }, {
-    label: '連続学習',
-    main: '12',
-    unit: '日',
-    sub: '自己ベスト更新中'
-  }].map(k => /*#__PURE__*/React.createElement("div", {
+  }, KPI.map(k => /*#__PURE__*/React.createElement("div", {
     key: k.label,
     style: {
       background: C.ink0,
@@ -1425,10 +1766,9 @@ function TabDashboard({
       letterSpacing: '.03em'
     }
   }, k.label), /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...mono(),
+    style: mono({
       color: C.ink7
-    }
+    })
   }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 30,
@@ -1449,7 +1789,7 @@ function TabDashboard({
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       height: '100%',
-      width: `${overallPct}%`,
+      width: `${stats.overallPct}%`,
       background: C.ink7,
       borderRadius: 99
     }
@@ -1492,25 +1832,27 @@ function TabDashboard({
       gap: 7,
       margin: '22px 0 12px'
     }
-  }, [...MILESTONES].reverse().map((m, ri) => {
-    const i = 4 - ri;
-    const sel = selectedLayer === i;
+  }, ms.slice().reverse().map((m, ri) => {
+    const i = n - 1 - ri; // 0=base
+    const onDark = i >= Math.ceil(n / 2);
+    const tc = onDark ? '#fff' : C.ink6;
+    const sel = selectedLayer === m.id;
     const border = m.status === '進行中' ? `1.5px solid ${C.accent}` : sel ? '1px solid rgba(255,255,255,.35)' : '0.5px solid transparent';
     return /*#__PURE__*/React.createElement("div", {
-      key: m.name,
+      key: m.id,
       style: {
-        width: PLW[i]
+        width: widthAt(i)
       }
     }, /*#__PURE__*/React.createElement("div", {
       className: "pyramid-layer",
-      onClick: () => setSelectedLayer(sel ? null : i),
+      onClick: () => setSelectedLayer(sel ? null : m.id),
       style: {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: 10,
-        padding: `13px ${PLPAD[i]}px`,
-        background: PLBG[i],
+        padding: `13px 18px`,
+        background: shade(i),
         borderRadius: 3,
         cursor: 'pointer',
         border
@@ -1519,8 +1861,10 @@ function TabDashboard({
       style: {
         fontSize: 12.5,
         fontWeight: 500,
-        color: PLTC[i],
-        whiteSpace: 'nowrap'
+        color: tc,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
       }
     }, m.name), /*#__PURE__*/React.createElement("span", {
       style: {
@@ -1535,25 +1879,14 @@ function TabDashboard({
         fontSize: 10,
         padding: '2px 9px',
         borderRadius: 99,
-        ...(m.status === '進行中' ? {
-          background: C.accentLight,
-          color: C.accent,
-          fontWeight: 500
-        } : m.status === '完了' ? {
-          border: `0.5px solid ${i === 0 ? '#8f8d88' : 'rgba(255,255,255,.45)'}`,
-          color: i === 0 ? C.ink5 : C.ink0
-        } : {
-          border: '0.5px solid rgba(255,255,255,.22)',
-          color: C.ink4
-        })
+        ...statusBadge(m.status, onDark, i)
       }
     }, m.status), /*#__PURE__*/React.createElement("span", {
-      style: {
-        ...mono(),
+      style: mono({
         fontSize: 11,
-        color: m.progress === 100 ? i === 0 ? C.ink5 : '#e8e7e4' : m.progress > 0 ? C.accentLight : C.ink4
-      }
-    }, m.progress, "%"))), sel && /*#__PURE__*/React.createElement("div", {
+        color: m.pct === 100 ? onDark ? '#e8e7e4' : C.ink5 : m.pct > 0 ? onDark ? C.accentLight : C.accent : onDark ? C.ink4 : C.ink3
+      })
+    }, m.pct, "%"))), sel && /*#__PURE__*/React.createElement("div", {
       className: "pyramid-detail",
       style: {
         background: C.ink1,
@@ -1567,18 +1900,14 @@ function TabDashboard({
         gap: 10
       }
     }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        ...mono(),
+      style: mono({
         fontSize: 11,
         color: C.ink4
-      }
-    }, m.period), m.tasks.map((t, ti) => {
-      const key = `${i}-${ti}`;
-      const toggled = completedTasks[key];
-      const effDone = toggled !== undefined ? toggled : t.state === 'done';
-      const dispState = effDone ? 'done' : t.state === 'current' ? 'current' : 'todo';
+      })
+    }, m.period), m.tasks.map(t => {
+      const ds = t.done ? 'done' : m.status === '進行中' ? 'current' : 'todo';
       return /*#__PURE__*/React.createElement("div", {
-        key: ti,
+        key: t.id,
         className: "task-row",
         style: {
           display: 'flex',
@@ -1586,13 +1915,18 @@ function TabDashboard({
           gap: 11,
           cursor: 'pointer'
         },
-        onClick: () => onToggleTask(key, !effDone)
+        onClick: () => onToggleTask(m.id, t.id)
       }, /*#__PURE__*/React.createElement("span", {
-        style: TASK_DOT[dispState]
+        style: TASK_DOT[ds]
       }), /*#__PURE__*/React.createElement("span", {
-        style: TASK_TEXT[dispState]
+        style: TASK_TEXT[ds]
       }, t.label));
-    })));
+    }), m.tasks.length === 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: C.ink3
+      }
+    }, "タスクはまだありません（ロードマップタブで追加）")));
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: 'center',
@@ -1626,8 +1960,8 @@ function TabDashboard({
       display: 'flex',
       flexDirection: 'column'
     }
-  }, TIMELINE.map((t, i) => /*#__PURE__*/React.createElement("div", {
-    key: t.name,
+  }, ms.map((t, i) => /*#__PURE__*/React.createElement("div", {
+    key: t.id,
     style: {
       display: 'flex',
       gap: 15,
@@ -1651,7 +1985,7 @@ function TabDashboard({
       background: t.status === '完了' ? C.ink7 : C.ink0,
       border: t.status === '完了' ? `0.5px solid ${C.ink7}` : t.status === '進行中' ? `1.5px solid ${C.accent}` : `0.5px solid ${C.ink3}`
     }
-  }), i < TIMELINE.length - 1 && /*#__PURE__*/React.createElement("span", {
+  }), i < ms.length - 1 && /*#__PURE__*/React.createElement("span", {
     style: {
       width: 0.5,
       flex: 1,
@@ -1679,17 +2013,7 @@ function TabDashboard({
       fontSize: 10.5,
       padding: '2px 9px',
       borderRadius: 99,
-      ...(t.status === '完了' ? {
-        border: `0.5px solid ${C.ink3}`,
-        color: C.ink4
-      } : t.status === '進行中' ? {
-        background: C.accentLight,
-        color: C.accent,
-        fontWeight: 500
-      } : {
-        border: `0.5px solid ${C.ink2}`,
-        color: C.ink3
-      })
+      ...statusBadge(t.status, false, i)
     }
   }, t.status)))))), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1723,7 +2047,7 @@ function TabDashboard({
       color: C.ink4,
       marginRight: 1
     }
-  }, "少"), ['#eeede9', '#d3d1cc', '#8f8d88', '#2c2b28'].map((bg, i) => /*#__PURE__*/React.createElement("span", {
+  }, "少"), HC.map((bg, i) => /*#__PURE__*/React.createElement("span", {
     key: i,
     style: {
       width: 11,
@@ -1759,8 +2083,13 @@ function TabDashboard({
       flexDirection: 'column',
       gap: 6
     }
-  }, HEAT.map(row => /*#__PURE__*/React.createElement("div", {
-    key: row.subject,
+  }, subjForHeat.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: C.ink3
+    }
+  }, "科目がありません"), subjForHeat.map(s => /*#__PURE__*/React.createElement("div", {
+    key: s.id,
     style: {
       display: 'grid',
       gridTemplateColumns: '42px repeat(6,1fr)',
@@ -1770,15 +2099,18 @@ function TabDashboard({
   }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
-      color: C.ink5
+      color: C.ink5,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis'
     }
-  }, row.subject), row.cells.map((v, i) => /*#__PURE__*/React.createElement("span", {
-    key: i,
+  }, s.name), weekDates.map(iso => /*#__PURE__*/React.createElement("span", {
+    key: iso,
     style: {
       height: 28,
       borderRadius: 3,
       border: `0.5px solid #efeeeb`,
-      background: HC[v],
+      background: HC[lvl(subjHoursOn(s.id, iso))],
       display: 'block'
     }
   }))))), /*#__PURE__*/React.createElement("div", {
@@ -1789,24 +2121,36 @@ function TabDashboard({
       lineHeight: 1.7
     }
   }, "継続日数 ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...mono(),
+    style: mono({
       color: C.ink7
-    }
-  }, "12"), " 日。今週は資格学習に重点を置いています。"))));
+    })
+  }, stats.streak), " 日。今週の合計 ", /*#__PURE__*/React.createElement("span", {
+    style: mono({
+      color: C.ink7
+    })
+  }, stats.weekTotal), " h。"))));
 }
 
-// ─── Tab: Roadmap ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// Roadmap tab (milestone + task CRUD)
+// ═══════════════════════════════════════════════════════════════════════════
 function TabRoadmap({
-  completedTasks,
-  onToggleTask
+  state,
+  stats,
+  dispatch
 }) {
+  const [editing, setEditing] = useState(null); // {milestone} or {new:true}
+  const [confirm, setConfirm] = useState(null);
+  const [taskEdit, setTaskEdit] = useState(null); // {msId, task} | {msId, new:true}
+  const ms = stats.milestones;
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'flex-end',
-      marginBottom: 28
+      marginBottom: 28,
+      flexWrap: 'wrap',
+      gap: 12
     }
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1815,40 +2159,41 @@ function TabRoadmap({
       color: C.ink7,
       marginBottom: 5
     }
-  }, "PMへの転職ロードマップ"), /*#__PURE__*/React.createElement("div", {
+  }, state.goal.title, " ロードマップ"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: C.ink4
     }
-  }, "基盤から頂点へ積み上げる5段階のマイルストーン")), /*#__PURE__*/React.createElement("div", {
+  }, "基盤から頂点へ積み上げる", ms.length, "段階のマイルストーン")), /*#__PURE__*/React.createElement("div", {
     style: {
-      ...mono(),
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: mono({
       fontSize: 11,
       color: C.ink4
+    })
+  }, "目標日：", fmtFull(state.goal.targetDate)), /*#__PURE__*/React.createElement(Btn, {
+    variant: "primary",
+    onClick: () => setEditing({
+      new: true
+    }),
+    style: {
+      padding: '9px 16px',
+      fontSize: 12.5
     }
-  }, "目標日：2027年4月15日")), /*#__PURE__*/React.createElement("div", {
+  }, "＋ マイルストーン"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column'
     }
-  }, MILESTONES.map((m, mi) => {
-    const active = m.status === '進行中';
-    const done = m.status === '完了';
-    const cardStyle = {
-      flex: 1,
-      marginBottom: 14,
-      background: active ? C.ink0 : done ? '#fafaf9' : C.ink0,
-      border: active ? `0.5px solid ${C.accent}` : `0.5px solid ${C.ink2}`,
-      borderRadius: 4,
-      padding: '22px 24px'
-    };
-    const miDone = m.tasks.reduce((s, t, ti) => {
-      const k = `${mi}-${ti}`;
-      return s + ((completedTasks.hasOwnProperty(k) ? completedTasks[k] : t.state === 'done') ? 1 : 0);
-    }, 0);
-    const progPct = Math.round(miDone / m.tasks.length * 100);
+  }, ms.map((m, i) => {
+    const active = m.status === '進行中',
+      done = m.status === '完了';
     return /*#__PURE__*/React.createElement("div", {
-      key: m.name,
+      key: m.id,
       style: {
         display: 'flex',
         gap: 20,
@@ -1873,7 +2218,7 @@ function TabRoadmap({
         background: done ? C.ink7 : C.ink0,
         border: done ? `0.5px solid ${C.ink7}` : active ? `1.5px solid ${C.accent}` : `0.5px solid ${C.ink3}`
       }
-    }), mi < MILESTONES.length - 1 && /*#__PURE__*/React.createElement("span", {
+    }), i < ms.length - 1 && /*#__PURE__*/React.createElement("span", {
       style: {
         width: 0.5,
         flex: 1,
@@ -1882,7 +2227,14 @@ function TabRoadmap({
         display: 'block'
       }
     })), /*#__PURE__*/React.createElement("div", {
-      style: cardStyle
+      style: {
+        flex: 1,
+        marginBottom: 14,
+        background: done ? '#fafaf9' : C.ink0,
+        border: active ? `0.5px solid ${C.accent}` : `0.5px solid ${C.ink2}`,
+        borderRadius: 4,
+        padding: '22px 24px'
+      }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: 'flex',
@@ -1891,45 +2243,56 @@ function TabRoadmap({
         gap: 12,
         marginBottom: 6
       }
-    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
-        ...mono(),
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: mono({
         fontSize: 11,
         color: C.ink4,
         marginBottom: 6
-      }
-    }, String(mi + 1).padStart(2, '0')), /*#__PURE__*/React.createElement("div", {
+      })
+    }, pad2(i + 1)), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 15,
         fontWeight: 700,
         color: m.status === '未着手' ? C.ink4 : C.ink7
       }
-    }, m.name)), /*#__PURE__*/React.createElement("span", {
+    }, m.name)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
         whiteSpace: 'nowrap',
         fontSize: 10.5,
         padding: '2px 9px',
         borderRadius: 99,
-        flexShrink: 0,
-        ...(active ? {
-          background: C.accentLight,
-          color: C.accent,
-          fontWeight: 500
-        } : done ? {
-          border: `0.5px solid ${C.ink3}`,
-          color: C.ink4
-        } : {
-          border: `0.5px solid ${C.ink2}`,
-          color: C.ink3
-        })
+        ...statusBadge(m.status, false, i)
       }
-    }, m.status)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        ...mono(),
+    }, m.status), /*#__PURE__*/React.createElement(IconBtn, {
+      label: "編集",
+      onClick: () => setEditing({
+        milestone: m
+      })
+    }), /*#__PURE__*/React.createElement(IconBtn, {
+      label: "削除",
+      danger: true,
+      onClick: () => setConfirm({
+        type: 'ms',
+        id: m.id,
+        name: m.name
+      })
+    }))), /*#__PURE__*/React.createElement("div", {
+      style: mono({
         fontSize: 11,
         color: C.ink4,
         marginBottom: 14
-      }
+      })
     }, m.period), /*#__PURE__*/React.createElement("div", {
       style: {
         height: 4,
@@ -1943,7 +2306,7 @@ function TabRoadmap({
         height: '100%',
         background: C.ink7,
         borderRadius: 99,
-        width: `${progPct}%`,
+        width: `${m.pct}%`,
         transition: 'width .3s ease'
       }
     })), /*#__PURE__*/React.createElement("div", {
@@ -1952,57 +2315,263 @@ function TabRoadmap({
         flexDirection: 'column',
         gap: 10
       }
-    }, m.tasks.map((t, ti) => {
-      const key = `${mi}-${ti}`;
-      const toggled = completedTasks[key];
-      const effDone = toggled !== undefined ? toggled : t.state === 'done';
-      const dispState = effDone ? 'done' : t.state === 'current' ? 'current' : 'todo';
+    }, m.tasks.map(t => {
+      const ds = t.done ? 'done' : active ? 'current' : 'todo';
       return /*#__PURE__*/React.createElement("div", {
-        key: ti,
+        key: t.id,
         className: "task-row",
         style: {
           display: 'flex',
           alignItems: 'center',
-          gap: 12,
-          cursor: 'pointer'
-        },
-        onClick: () => onToggleTask(key, !effDone)
+          gap: 12
+        }
       }, /*#__PURE__*/React.createElement("span", {
-        style: TASK_DOT[dispState]
+        onClick: () => dispatch({
+          type: 'toggleTask',
+          msId: m.id,
+          taskId: t.id
+        }),
+        style: {
+          ...TASK_DOT[ds],
+          cursor: 'pointer'
+        }
       }), /*#__PURE__*/React.createElement("span", {
-        style: TASK_TEXT[dispState]
-      }, t.label));
-    }))));
+        onClick: () => dispatch({
+          type: 'toggleTask',
+          msId: m.id,
+          taskId: t.id
+        }),
+        style: {
+          ...TASK_TEXT[ds],
+          cursor: 'pointer',
+          flex: 1
+        }
+      }, t.label), /*#__PURE__*/React.createElement("button", {
+        onClick: () => setTaskEdit({
+          msId: m.id,
+          task: t
+        }),
+        style: {
+          background: 'none',
+          border: 'none',
+          fontSize: 11,
+          color: C.ink4
+        }
+      }, "編集"), /*#__PURE__*/React.createElement("button", {
+        onClick: () => dispatch({
+          type: 'delTask',
+          msId: m.id,
+          taskId: t.id
+        }),
+        style: {
+          background: 'none',
+          border: 'none',
+          fontSize: 11,
+          color: C.ink4
+        }
+      }, "×"));
+    }), /*#__PURE__*/React.createElement("button", {
+      onClick: () => setTaskEdit({
+        msId: m.id,
+        new: true
+      }),
+      style: {
+        alignSelf: 'flex-start',
+        marginTop: 4,
+        background: 'none',
+        border: `0.5px dashed ${C.ink3}`,
+        borderRadius: 3,
+        fontSize: 12,
+        color: C.ink4,
+        padding: '6px 12px'
+      }
+    }, "＋ タスクを追加"))));
+  }), ms.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: C.ink4,
+      padding: '40px 0',
+      textAlign: 'center'
+    }
+  }, "マイルストーンがありません。「＋ マイルストーン」から追加してください。")), editing && /*#__PURE__*/React.createElement(MilestoneModal, {
+    milestone: editing.milestone,
+    onClose: () => setEditing(null),
+    onSave: data => {
+      dispatch(editing.new ? {
+        type: 'addMs',
+        data
+      } : {
+        type: 'editMs',
+        id: editing.milestone.id,
+        data
+      });
+      setEditing(null);
+    }
+  }), taskEdit && /*#__PURE__*/React.createElement(TaskModal, {
+    task: taskEdit.task,
+    onClose: () => setTaskEdit(null),
+    onSave: label => {
+      dispatch(taskEdit.new ? {
+        type: 'addTask',
+        msId: taskEdit.msId,
+        label
+      } : {
+        type: 'editTask',
+        msId: taskEdit.msId,
+        taskId: taskEdit.task.id,
+        label
+      });
+      setTaskEdit(null);
+    }
+  }), confirm && /*#__PURE__*/React.createElement(ConfirmDialog, {
+    title: "マイルストーンを削除",
+    message: `「${confirm.name}」を削除します。含まれるタスクもすべて削除されます。`,
+    onConfirm: () => dispatch({
+      type: 'delMs',
+      id: confirm.id
+    }),
+    onClose: () => setConfirm(null)
+  }));
+}
+function MilestoneModal({
+  milestone,
+  onClose,
+  onSave
+}) {
+  const [name, setName] = useState(milestone?.name || '');
+  const [period, setPeriod] = useState(milestone?.period || '');
+  const valid = name.trim().length > 0;
+  return /*#__PURE__*/React.createElement(Modal, {
+    title: milestone ? 'マイルストーンを編集' : 'マイルストーンを追加',
+    onClose: onClose,
+    footer: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Btn, {
+      variant: "ghost",
+      onClick: onClose
+    }, "キャンセル"), /*#__PURE__*/React.createElement(Btn, {
+      variant: "primary",
+      disabled: !valid,
+      style: {
+        opacity: valid ? 1 : .4
+      },
+      onClick: () => valid && onSave({
+        name: name.trim(),
+        period: period.trim()
+      })
+    }, "保存"))
+  }, /*#__PURE__*/React.createElement(Field, {
+    label: "名称"
+  }, /*#__PURE__*/React.createElement("input", {
+    style: inputStyle,
+    value: name,
+    onChange: e => setName(e.target.value),
+    placeholder: "例：資格取得・スキル証明",
+    autoFocus: true
+  })), /*#__PURE__*/React.createElement(Field, {
+    label: "期間・フェーズ（任意）"
+  }, /*#__PURE__*/React.createElement("input", {
+    style: inputStyle,
+    value: period,
+    onChange: e => setPeriod(e.target.value),
+    placeholder: "例：2026.01 – 2026.06"
+  })));
+}
+function TaskModal({
+  task,
+  onClose,
+  onSave
+}) {
+  const [label, setLabel] = useState(task?.label || '');
+  const valid = label.trim().length > 0;
+  return /*#__PURE__*/React.createElement(Modal, {
+    title: task ? 'タスクを編集' : 'タスクを追加',
+    onClose: onClose,
+    footer: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Btn, {
+      variant: "ghost",
+      onClick: onClose
+    }, "キャンセル"), /*#__PURE__*/React.createElement(Btn, {
+      variant: "primary",
+      disabled: !valid,
+      style: {
+        opacity: valid ? 1 : .4
+      },
+      onClick: () => valid && onSave(label.trim())
+    }, "保存"))
+  }, /*#__PURE__*/React.createElement(Field, {
+    label: "タスク名"
+  }, /*#__PURE__*/React.createElement("input", {
+    style: inputStyle,
+    value: label,
+    onChange: e => setLabel(e.target.value),
+    placeholder: "例：PMP 試験対策",
+    autoFocus: true
   })));
 }
 
-// ─── Tab: Calendar ────────────────────────────────────────────────────────────
-function TabCalendar() {
-  const first = new Date(2026, 5, 1).getDay();
-  const dim = 30;
-  const _now = new Date();
-  const todayD = _now.getFullYear() === 2026 && _now.getMonth() === 5 ? _now.getDate() : -1;
-  const maxH = Math.max(...Object.values(HOURS_BY_DAY));
-  const studyDayCount = Object.keys(HOURS_BY_DAY).length;
-  const hoursTotal = +Object.values(HOURS_BY_DAY).reduce((a, b) => a + b, 0).toFixed(1);
-  const calCells = [];
-  for (let i = 0; i < first; i++) calCells.push({
+// ═══════════════════════════════════════════════════════════════════════════
+// Calendar tab
+// ═══════════════════════════════════════════════════════════════════════════
+function TabCalendar({
+  state,
+  stats,
+  dispatch
+}) {
+  const now = new Date();
+  const [view, setView] = useState({
+    y: now.getFullYear(),
+    m: now.getMonth()
+  }); // m: 0-indexed
+  const [logModal, setLogModal] = useState(null); // {date}
+  const [eventModal, setEventModal] = useState(null); // {event} | {new:true}
+  const [confirm, setConfirm] = useState(null);
+  const first = new Date(view.y, view.m, 1).getDay();
+  const dim = new Date(view.y, view.m + 1, 0).getDate();
+  const monthHours = [];
+  for (let d = 1; d <= dim; d++) {
+    const iso = `${view.y}-${pad2(view.m + 1)}-${pad2(d)}`;
+    monthHours.push(stats.hoursByDate[iso] || 0);
+  }
+  const maxH = Math.max(0.1, ...monthHours);
+  const studyDayCount = monthHours.filter(h => h > 0).length;
+  const hoursTotal = round1(monthHours.reduce((a, b) => a + b, 0));
+  const todayIso = todayISO();
+  const cells = [];
+  for (let i = 0; i < first; i++) cells.push({
     empty: true
   });
   for (let d = 1; d <= dim; d++) {
-    const h = HOURS_BY_DAY[d] || 0;
+    const iso = `${view.y}-${pad2(view.m + 1)}-${pad2(d)}`;
+    const h = stats.hoursByDate[iso] || 0;
     const alpha = h > 0 ? 0.11 + h / maxH * 0.58 : 0;
-    const bg = h > 0 ? `rgba(20,20,19,${alpha.toFixed(2)})` : 'transparent';
-    const tc = alpha > 0.42 ? C.ink0 : C.ink5;
-    const border = d === todayD ? `1.5px solid ${C.ink7}` : `0.5px solid #f0efec`;
-    calCells.push({
+    cells.push({
       d,
+      iso,
       h,
-      bg,
-      tc,
-      border
+      bg: h > 0 ? `rgba(20,20,19,${alpha.toFixed(2)})` : 'transparent',
+      tc: alpha > 0.42 ? C.ink0 : C.ink5,
+      isToday: iso === todayIso
     });
   }
+  function shift(delta) {
+    let m = view.m + delta,
+      y = view.y;
+    if (m < 0) {
+      m = 11;
+      y--;
+    }
+    if (m > 11) {
+      m = 0;
+      y++;
+    }
+    setView({
+      y,
+      m
+    });
+  }
+  const upcoming = state.events.filter(e => e.date >= todayIso).sort((a, b) => a.date.localeCompare(b.date));
+  const subjName = id => {
+    const s = state.subjects.find(x => x.id === id);
+    return s ? s.name : null;
+  };
   return /*#__PURE__*/React.createElement("div", {
     className: "cal-layout",
     style: {
@@ -2029,13 +2598,13 @@ function TabCalendar() {
   }, [{
     val: `${studyDayCount}日`,
     label: '学習日数',
-    sub: '/ 30日'
+    sub: `/ ${dim}日`
   }, {
     val: `${hoursTotal}h`,
     label: '合計時間',
     sub: '今月累計'
   }, {
-    val: `${(hoursTotal / studyDayCount).toFixed(1)}h`,
+    val: `${studyDayCount ? round1(hoursTotal / studyDayCount) : 0}h`,
     label: '日平均',
     sub: '/ 学習日'
   }].map(s => /*#__PURE__*/React.createElement("div", {
@@ -2046,13 +2615,12 @@ function TabCalendar() {
       padding: '14px 16px'
     }
   }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 22,
       fontWeight: 500,
       color: C.ink7,
       marginBottom: 4
-    }
+    })
   }, s.val), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
@@ -2066,19 +2634,45 @@ function TabCalendar() {
     }
   }, s.sub)))), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 13,
-      fontWeight: 700,
-      color: C.ink7,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       marginBottom: 13
     }
-  }, "2026年 6月"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => shift(-1),
+    style: {
+      background: 'none',
+      border: `0.5px solid ${C.ink2}`,
+      borderRadius: 3,
+      padding: '4px 11px',
+      fontSize: 13,
+      color: C.ink5
+    }
+  }, "‹"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 700,
+      color: C.ink7
+    }
+  }, view.y, "年 ", view.m + 1, "月"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => shift(1),
+    style: {
+      background: 'none',
+      border: `0.5px solid ${C.ink2}`,
+      borderRadius: 3,
+      padding: '4px 11px',
+      fontSize: 13,
+      color: C.ink5
+    }
+  }, "›")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'grid',
       gridTemplateColumns: 'repeat(7,1fr)',
       gap: 5,
       marginBottom: 5
     }
-  }, ['日', '月', '火', '水', '木', '金', '土'].map(w => /*#__PURE__*/React.createElement("span", {
+  }, WD_JP.map(w => /*#__PURE__*/React.createElement("span", {
     key: w,
     style: {
       textAlign: 'center',
@@ -2091,15 +2685,19 @@ function TabCalendar() {
       gridTemplateColumns: 'repeat(7,1fr)',
       gap: 5
     }
-  }, calCells.map((c, i) => c.empty ? /*#__PURE__*/React.createElement("div", {
+  }, cells.map((c, i) => c.empty ? /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       aspectRatio: '1',
-      border: `0.5px solid transparent`,
+      border: '0.5px solid transparent',
       borderRadius: 3
     }
   }) : /*#__PURE__*/React.createElement("div", {
     key: i,
+    className: "cal-day",
+    onClick: () => setLogModal({
+      date: c.iso
+    }),
     style: {
       aspectRatio: '1',
       display: 'flex',
@@ -2108,11 +2706,13 @@ function TabCalendar() {
       justifyContent: 'center',
       gap: 2,
       borderRadius: 3,
-      ...mono(),
-      fontSize: 11,
+      ...mono({
+        fontSize: 11
+      }),
       color: c.tc,
       background: c.bg,
-      border: c.border
+      border: c.isToday ? `1.5px solid ${C.ink7}` : `0.5px solid #f0efec`,
+      cursor: 'pointer'
     }
   }, /*#__PURE__*/React.createElement("span", null, c.d), c.h > 0 && /*#__PURE__*/React.createElement("span", {
     style: {
@@ -2148,27 +2748,13 @@ function TabCalendar() {
       fontSize: 11,
       color: C.ink4
     }
-  }, "学習時間（少 → 多）"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 5,
-      marginLeft: 8
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      width: 9,
-      height: 9,
-      borderRadius: 99,
-      border: `1.5px solid ${C.ink7}`,
-      display: 'inline-block'
-    }
-  }), /*#__PURE__*/React.createElement("span", {
+  }, "学習時間（少 → 多）"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
-      color: C.ink5
+      color: C.ink4,
+      marginLeft: 'auto'
     }
-  }, todayD > 0 ? `今日 (6/${todayD})` : '今日')))), /*#__PURE__*/React.createElement("div", {
+  }, "日付クリックで記録を追加"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column',
@@ -2183,19 +2769,43 @@ function TabCalendar() {
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 13,
-      fontWeight: 700,
-      color: C.ink7,
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
       marginBottom: 18
     }
-  }, "今後の予定"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      fontWeight: 700,
+      color: C.ink7
+    }
+  }, "今後の予定"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setEventModal({
+      new: true
+    }),
+    style: {
+      background: 'none',
+      border: `0.5px solid ${C.ink3}`,
+      borderRadius: 3,
+      fontSize: 11,
+      color: C.ink5,
+      padding: '3px 9px'
+    }
+  }, "＋ 追加")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column',
       gap: 16
     }
-  }, EVENTS.map(e => /*#__PURE__*/React.createElement("div", {
-    key: e.date,
+  }, upcoming.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: C.ink3
+    }
+  }, "予定はありません"), upcoming.map(e => /*#__PURE__*/React.createElement("div", {
+    key: e.id,
+    className: "event-row",
     style: {
       display: 'flex',
       gap: 14,
@@ -2212,19 +2822,18 @@ function TabCalendar() {
       minWidth: 50
     }
   }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 11.5,
       color: C.ink7,
       whiteSpace: 'nowrap'
-    }
-  }, e.date), /*#__PURE__*/React.createElement("div", {
+    })
+  }, fmtLogDate(e.date)), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: C.ink4,
       marginTop: 2
     }
-  }, e.wd)), /*#__PURE__*/React.createElement("div", {
+  }, weekdayJP(e.date))), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
     }
@@ -2235,7 +2844,13 @@ function TabCalendar() {
       lineHeight: 1.5,
       marginBottom: 6
     }
-  }, e.label), /*#__PURE__*/React.createElement("span", {
+  }, e.label), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8
+    }
+  }, subjName(e.subjectId) && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 10,
       padding: '2px 9px',
@@ -2245,7 +2860,28 @@ function TabCalendar() {
       color: C.ink5,
       whiteSpace: 'nowrap'
     }
-  }, e.subject)))))), /*#__PURE__*/React.createElement("div", {
+  }, subjName(e.subjectId)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setEventModal({
+      event: e
+    }),
+    style: {
+      background: 'none',
+      border: 'none',
+      fontSize: 11,
+      color: C.ink4
+    }
+  }, "編集"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setConfirm({
+      id: e.id,
+      label: e.label
+    }),
+    style: {
+      background: 'none',
+      border: 'none',
+      fontSize: 11,
+      color: C.ink4
+    }
+  }, "削除"))))))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.ink0,
       border: `0.5px solid ${C.ink2}`,
@@ -2259,28 +2895,28 @@ function TabCalendar() {
       color: C.ink7,
       marginBottom: 12
     }
-  }, "月次まとめ"), /*#__PURE__*/React.createElement("div", {
+  }, "サマリー"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column',
       gap: 10
     }
   }, [{
-    l: 'ベストの連続学習',
-    v: '12日',
+    l: '連続学習',
+    v: `${stats.streak}日`,
     mono: true
   }, {
-    l: '最長学習（1日）',
-    v: '3.0h',
+    l: '累計学習',
+    v: `${stats.totalHours}h`,
+    mono: true
+  }, {
+    l: '週平均',
+    v: `${stats.weekAvg}h`,
     mono: true
   }, {
     l: '最多学習科目',
-    v: 'AWS',
+    v: stats.subjectTotals[0] ? stats.subjectTotals[0].name : '—',
     mono: false
-  }, {
-    l: '前月比',
-    v: '+18%',
-    mono: true
   }].map(r => /*#__PURE__*/React.createElement("div", {
     key: r.l,
     style: {
@@ -2293,19 +2929,136 @@ function TabCalendar() {
       color: C.ink4
     }
   }, r.l), /*#__PURE__*/React.createElement("span", {
-    style: r.mono ? {
-      ...mono(),
+    style: r.mono ? mono({
       color: C.ink7
-    } : {
+    }) : {
       color: C.ink6
     }
-  }, r.v)))))));
+  }, r.v)))))), logModal && /*#__PURE__*/React.createElement(LogModal, {
+    state: state,
+    fixedDate: logModal.date,
+    onClose: () => setLogModal(null),
+    onSave: data => {
+      dispatch({
+        type: 'addLog',
+        data
+      });
+      setLogModal(null);
+    }
+  }), eventModal && /*#__PURE__*/React.createElement(EventModal, {
+    state: state,
+    event: eventModal.event,
+    onClose: () => setEventModal(null),
+    onSave: data => {
+      dispatch(eventModal.new ? {
+        type: 'addEvent',
+        data
+      } : {
+        type: 'editEvent',
+        id: eventModal.event.id,
+        data
+      });
+      setEventModal(null);
+    }
+  }), confirm && /*#__PURE__*/React.createElement(ConfirmDialog, {
+    title: "予定を削除",
+    message: `「${confirm.label}」を削除しますか？`,
+    onConfirm: () => dispatch({
+      type: 'delEvent',
+      id: confirm.id
+    }),
+    onClose: () => setConfirm(null)
+  }));
+}
+function EventModal({
+  state,
+  event,
+  onClose,
+  onSave
+}) {
+  const [date, setDate] = useState(event?.date || todayISO());
+  const [label, setLabel] = useState(event?.label || '');
+  const [subjectId, setSubjectId] = useState(event?.subjectId || '');
+  const valid = label.trim() && date;
+  return /*#__PURE__*/React.createElement(Modal, {
+    title: event ? '予定を編集' : '予定を追加',
+    onClose: onClose,
+    footer: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Btn, {
+      variant: "ghost",
+      onClick: onClose
+    }, "キャンセル"), /*#__PURE__*/React.createElement(Btn, {
+      variant: "primary",
+      disabled: !valid,
+      style: {
+        opacity: valid ? 1 : .4
+      },
+      onClick: () => valid && onSave({
+        date,
+        label: label.trim(),
+        subjectId: subjectId || null
+      })
+    }, "保存"))
+  }, /*#__PURE__*/React.createElement(Field, {
+    label: "日付"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    style: inputStyle,
+    value: date,
+    onChange: e => setDate(e.target.value)
+  })), /*#__PURE__*/React.createElement(Field, {
+    label: "内容"
+  }, /*#__PURE__*/React.createElement("input", {
+    style: inputStyle,
+    value: label,
+    onChange: e => setLabel(e.target.value),
+    placeholder: "例：AWS SAA 模擬試験",
+    autoFocus: true
+  })), /*#__PURE__*/React.createElement(Field, {
+    label: "関連科目（任意）"
+  }, /*#__PURE__*/React.createElement("select", {
+    style: inputStyle,
+    value: subjectId,
+    onChange: e => setSubjectId(e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "なし"), state.subjects.map(s => /*#__PURE__*/React.createElement("option", {
+    key: s.id,
+    value: s.id
+  }, s.name)))));
 }
 
-// ─── Tab: Learning Log ────────────────────────────────────────────────────────
-function TabLog() {
-  const maxH = Math.max(...WEEK.map(w => w.h), 0.1);
-  const subjTotal = SUBJ_TOTALS.reduce((a, s) => a + s.h, 0);
+// ═══════════════════════════════════════════════════════════════════════════
+// Learning log tab
+// ═══════════════════════════════════════════════════════════════════════════
+function TabLog({
+  state,
+  stats,
+  dispatch
+}) {
+  const [logModal, setLogModal] = useState(null); // {log} | {new:true}
+  const [confirm, setConfirm] = useState(null);
+  const [subjMgr, setSubjMgr] = useState(false);
+  const maxH = Math.max(0.1, ...stats.week.map(w => w.h));
+  const subjTotal = stats.subjectTotals.reduce((a, s) => a + s.h, 0) || 1;
+  const todayIso = todayISO();
+  const sortedLogs = state.logs.slice().sort((a, b) => b.date.localeCompare(a.date));
+  const subjName = id => {
+    const s = state.subjects.find(x => x.id === id);
+    return s ? s.name : '—';
+  };
+  const STATS = [{
+    label: '累計学習',
+    val: `${stats.totalHours}h`
+  }, {
+    label: '学習日数',
+    val: `${stats.studyDays}日`
+  }, {
+    label: '連続学習',
+    val: `${stats.streak}日`
+  }, {
+    label: '週平均',
+    val: `${stats.weekAvg}h`
+  }];
   return /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -2313,25 +3066,48 @@ function TabLog() {
       gap: 20
     }
   }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 700,
+      color: C.ink7
+    }
+  }, "学習記録"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    variant: "secondary",
+    onClick: () => setSubjMgr(true),
+    style: {
+      padding: '9px 16px',
+      fontSize: 12.5
+    }
+  }, "科目を管理"), /*#__PURE__*/React.createElement(Btn, {
+    variant: "primary",
+    onClick: () => setLogModal({
+      new: true
+    }),
+    style: {
+      padding: '9px 16px',
+      fontSize: 12.5
+    }
+  }, "＋ 記録を追加"))), /*#__PURE__*/React.createElement("div", {
     className: "log-stats",
     style: {
       display: 'grid',
       gridTemplateColumns: 'repeat(4,1fr)',
       gap: 12
     }
-  }, [{
-    label: '累計学習',
-    val: '142h'
-  }, {
-    label: '学習日数',
-    val: '48日'
-  }, {
-    label: '連続学習',
-    val: '12日'
-  }, {
-    label: '週平均',
-    val: '13.5h'
-  }].map(s => /*#__PURE__*/React.createElement("div", {
+  }, STATS.map(s => /*#__PURE__*/React.createElement("div", {
     key: s.label,
     style: {
       background: C.ink0,
@@ -2346,12 +3122,11 @@ function TabLog() {
       marginBottom: 9
     }
   }, s.label), /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 28,
       fontWeight: 500,
       color: C.ink7
-    }
+    })
   }, s.val)))), /*#__PURE__*/React.createElement("div", {
     className: "log-charts",
     style: {
@@ -2379,7 +3154,7 @@ function TabLog() {
       color: C.ink4,
       marginBottom: 20
     }
-  }, "Mon – Sun（6/15 – 6/21）"), /*#__PURE__*/React.createElement("div", {
+  }, "月 – 日"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 10,
@@ -2387,11 +3162,11 @@ function TabLog() {
       borderBottom: `0.5px solid ${C.ink2}`,
       paddingBottom: 1
     }
-  }, WEEK.map(w => {
+  }, stats.week.map(w => {
     const barH = w.h > 0 ? Math.max(5, Math.round(w.h / maxH * 74)) : 4;
-    const today = w.d === '日';
+    const today = w.iso === todayIso;
     return /*#__PURE__*/React.createElement("div", {
-      key: w.d,
+      key: w.iso,
       style: {
         flex: 1,
         display: 'flex',
@@ -2400,11 +3175,10 @@ function TabLog() {
         gap: 4
       }
     }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        ...mono(),
+      style: mono({
         fontSize: 10,
         color: w.h > 0 ? C.ink7 : '#e8e7e4'
-      }
+      })
     }, w.h > 0 ? `${w.h}h` : ''), /*#__PURE__*/React.createElement("div", {
       style: {
         width: 28,
@@ -2419,14 +3193,14 @@ function TabLog() {
       gap: 10,
       marginTop: 7
     }
-  }, WEEK.map(w => /*#__PURE__*/React.createElement("span", {
-    key: w.d,
+  }, stats.week.map(w => /*#__PURE__*/React.createElement("span", {
+    key: w.iso,
     style: {
       flex: 1,
       textAlign: 'center',
       fontSize: 11,
-      color: w.d === '日' ? C.ink7 : C.ink4,
-      fontWeight: w.d === '日' ? 700 : 400
+      color: w.iso === todayIso ? C.ink7 : C.ink4,
+      fontWeight: w.iso === todayIso ? 700 : 400
     }
   }, w.d))), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2435,7 +3209,7 @@ function TabLog() {
       gap: 7,
       marginTop: 16,
       paddingTop: 14,
-      borderTop: `0.5px solid #f0efec`
+      borderTop: '0.5px solid #f0efec'
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
@@ -2443,12 +3217,11 @@ function TabLog() {
       color: C.ink4
     }
   }, "週計"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 16,
       color: C.ink7
-    }
-  }, "13.5h"), /*#__PURE__*/React.createElement("span", {
+    })
+  }, stats.weekTotal, "h"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
       color: C.ink4,
@@ -2459,7 +3232,7 @@ function TabLog() {
       fontSize: 12,
       color: C.ink5
     }
-  }, "+2.0h"))), /*#__PURE__*/React.createElement("div", {
+  }, stats.weekTotal - stats.lastWeekTotal >= 0 ? '+' : '', round1(stats.weekTotal - stats.lastWeekTotal), "h"))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.ink0,
       border: `0.5px solid ${C.ink2}`,
@@ -2479,16 +3252,21 @@ function TabLog() {
       color: C.ink4,
       marginBottom: 22
     }
-  }, "全142h の内訳"), /*#__PURE__*/React.createElement("div", {
+  }, "全", stats.totalHours, "h の内訳"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column',
       gap: 20
     }
-  }, SUBJ_TOTALS.map(s => {
+  }, stats.subjectTotals.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: C.ink3
+    }
+  }, "まだ記録がありません"), stats.subjectTotals.map(s => {
     const pct = Math.round(s.h / subjTotal * 100);
     return /*#__PURE__*/React.createElement("div", {
-      key: s.name
+      key: s.id
     }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: 'flex',
@@ -2509,18 +3287,16 @@ function TabLog() {
         gap: 5
       }
     }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        ...mono(),
+      style: mono({
         fontSize: 16,
         color: C.ink7,
         fontWeight: 500
-      }
+      })
     }, s.h, "h"), /*#__PURE__*/React.createElement("span", {
-      style: {
-        ...mono(),
+      style: mono({
         fontSize: 11,
         color: C.ink4
-      }
+      })
     }, pct, "%"))), /*#__PURE__*/React.createElement("div", {
       style: {
         height: 6,
@@ -2561,65 +3337,573 @@ function TabLog() {
       fontSize: 11,
       color: C.ink4
     }
-  }, "直近7件")), /*#__PURE__*/React.createElement("div", {
+  }, "全", sortedLogs.length, "件")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column'
     }
-  }, LOGS.map(l => /*#__PURE__*/React.createElement("div", {
-    key: l.date + l.topic,
+  }, sortedLogs.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: C.ink4,
+      padding: '24px 0',
+      textAlign: 'center'
+    }
+  }, "記録がありません。「＋ 記録を追加」から登録してください。"), sortedLogs.map(l => /*#__PURE__*/React.createElement("div", {
+    key: l.id,
+    className: "log-row",
     style: {
       display: 'flex',
       alignItems: 'center',
       gap: 18,
       padding: '14px 0',
-      borderBottom: `0.5px solid #f0efec`
+      borderBottom: '0.5px solid #f0efec'
     }
   }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 12,
       color: C.ink4,
       flexShrink: 0,
       width: 52
-    }
-  }, l.date), /*#__PURE__*/React.createElement("span", {
+    })
+  }, fmtLogDate(l.date)), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
       color: C.ink6,
       background: C.ink1,
-      border: `0.5px solid #d3d1cc`,
+      border: '0.5px solid #d3d1cc',
       borderRadius: 3,
       padding: '3px 9px',
       flexShrink: 0,
       whiteSpace: 'nowrap'
     }
-  }, l.subject), /*#__PURE__*/React.createElement("span", {
+  }, subjName(l.subjectId)), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13.5,
       color: C.ink6,
       flex: 1
     }
   }, l.topic), /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...mono(),
+    style: mono({
       fontSize: 13,
       color: C.ink7,
       flexShrink: 0
+    })
+  }, l.hours, "h"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setLogModal({
+      log: l
+    }),
+    style: {
+      background: 'none',
+      border: 'none',
+      fontSize: 11,
+      color: C.ink4,
+      flexShrink: 0
     }
-  }, l.hours))))));
+  }, "編集"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setConfirm({
+      id: l.id,
+      topic: l.topic
+    }),
+    style: {
+      background: 'none',
+      border: 'none',
+      fontSize: 11,
+      color: C.ink4,
+      flexShrink: 0
+    }
+  }, "削除"))))), logModal && /*#__PURE__*/React.createElement(LogModal, {
+    state: state,
+    log: logModal.log,
+    onClose: () => setLogModal(null),
+    onSave: data => {
+      dispatch(logModal.new || logModal.date ? {
+        type: 'addLog',
+        data
+      } : {
+        type: 'editLog',
+        id: logModal.log.id,
+        data
+      });
+      setLogModal(null);
+    }
+  }), confirm && /*#__PURE__*/React.createElement(ConfirmDialog, {
+    title: "記録を削除",
+    message: `「${confirm.topic}」を削除しますか？`,
+    onConfirm: () => dispatch({
+      type: 'delLog',
+      id: confirm.id
+    }),
+    onClose: () => setConfirm(null)
+  }), subjMgr && /*#__PURE__*/React.createElement(SubjectManager, {
+    state: state,
+    dispatch: dispatch,
+    onClose: () => setSubjMgr(false)
+  }));
+}
+function LogModal({
+  state,
+  log,
+  fixedDate,
+  onClose,
+  onSave
+}) {
+  const [date, setDate] = useState(log?.date || fixedDate || todayISO());
+  const [subjectId, setSubjectId] = useState(log?.subjectId || state.subjects[0] && state.subjects[0].id || '');
+  const [topic, setTopic] = useState(log?.topic || '');
+  const [hours, setHours] = useState(log ? String(log.hours) : '1.0');
+  const hoursNum = parseFloat(hours);
+  const valid = date && subjectId && topic.trim() && hoursNum > 0;
+  return /*#__PURE__*/React.createElement(Modal, {
+    title: log ? '記録を編集' : '学習記録を追加',
+    onClose: onClose,
+    footer: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Btn, {
+      variant: "ghost",
+      onClick: onClose
+    }, "キャンセル"), /*#__PURE__*/React.createElement(Btn, {
+      variant: "primary",
+      disabled: !valid,
+      style: {
+        opacity: valid ? 1 : .4
+      },
+      onClick: () => valid && onSave({
+        date,
+        subjectId,
+        topic: topic.trim(),
+        hours: round1(hoursNum)
+      })
+    }, "保存"))
+  }, state.subjects.length === 0 ? /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: C.ink5,
+      lineHeight: 1.8
+    }
+  }, "先に「科目を管理」から科目を1つ以上追加してください。") : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Field, {
+    label: "日付"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    style: inputStyle,
+    value: date,
+    onChange: e => setDate(e.target.value)
+  })), /*#__PURE__*/React.createElement(Field, {
+    label: "科目"
+  }, /*#__PURE__*/React.createElement("select", {
+    style: inputStyle,
+    value: subjectId,
+    onChange: e => setSubjectId(e.target.value)
+  }, state.subjects.map(s => /*#__PURE__*/React.createElement("option", {
+    key: s.id,
+    value: s.id
+  }, s.name)))), /*#__PURE__*/React.createElement(Field, {
+    label: "学習内容"
+  }, /*#__PURE__*/React.createElement("input", {
+    style: inputStyle,
+    value: topic,
+    onChange: e => setTopic(e.target.value),
+    placeholder: "例：VPC・ネットワーク設計",
+    autoFocus: true
+  })), /*#__PURE__*/React.createElement(Field, {
+    label: "学習時間（h）"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    step: "0.5",
+    min: "0",
+    style: inputStyle,
+    value: hours,
+    onChange: e => setHours(e.target.value)
+  }))));
+}
+function SubjectManager({
+  state,
+  dispatch,
+  onClose
+}) {
+  const [name, setName] = useState('');
+  const usedCount = id => state.logs.filter(l => l.subjectId === id).length;
+  return /*#__PURE__*/React.createElement(Modal, {
+    title: "科目を管理",
+    onClose: onClose,
+    footer: /*#__PURE__*/React.createElement(Btn, {
+      variant: "primary",
+      onClick: onClose
+    }, "閉じる")
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      marginBottom: 18
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...inputStyle,
+      flex: 1
+    },
+    value: name,
+    onChange: e => setName(e.target.value),
+    placeholder: "新しい科目名",
+    onKeyDown: e => {
+      if (e.key === 'Enter' && name.trim()) {
+        dispatch({
+          type: 'addSubject',
+          name: name.trim()
+        });
+        setName('');
+      }
+    }
+  }), /*#__PURE__*/React.createElement(Btn, {
+    variant: "primary",
+    disabled: !name.trim(),
+    style: {
+      opacity: name.trim() ? 1 : .4
+    },
+    onClick: () => {
+      if (name.trim()) {
+        dispatch({
+          type: 'addSubject',
+          name: name.trim()
+        });
+        setName('');
+      }
+    }
+  }, "追加")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8
+    }
+  }, state.subjects.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: C.ink3
+    }
+  }, "科目がありません"), state.subjects.map(s => /*#__PURE__*/React.createElement("div", {
+    key: s.id,
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      padding: '10px 12px',
+      border: `0.5px solid ${C.ink2}`,
+      borderRadius: 3
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    defaultValue: s.name,
+    onBlur: e => {
+      const v = e.target.value.trim();
+      if (v && v !== s.name) dispatch({
+        type: 'renameSubject',
+        id: s.id,
+        name: v
+      });
+    },
+    style: {
+      flex: 1,
+      border: 'none',
+      fontSize: 13.5,
+      color: C.ink6,
+      background: 'none',
+      fontFamily: 'inherit'
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: C.ink4
+    }
+  }, usedCount(s.id), "件"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => dispatch({
+      type: 'delSubject',
+      id: s.id
+    }),
+    style: {
+      background: 'none',
+      border: 'none',
+      fontSize: 12,
+      color: C.ink4
+    },
+    title: "削除"
+  }, "×")))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 11,
+      color: C.ink3,
+      marginTop: 14,
+      lineHeight: 1.7
+    }
+  }, "科目を削除すると、その科目の学習記録も削除されます。名称は直接編集できます。"));
 }
 
-// ─── Phase 4: Dashboard ───────────────────────────────────────────────────────
-function PhaseDashboard({
-  resultType,
-  completedTasks,
-  onToggleTask,
-  onRestart
+// ═══════════════════════════════════════════════════════════════════════════
+// Settings tab
+// ═══════════════════════════════════════════════════════════════════════════
+function TabSettings({
+  state,
+  dispatch,
+  onRestart,
+  onWipe
+}) {
+  const [name, setName] = useState(state.profile.name);
+  const [goalTitle, setGoalTitle] = useState(state.goal.title);
+  const [goalDate, setGoalDate] = useState(state.goal.targetDate);
+  const [confirmWipe, setConfirmWipe] = useState(false);
+  const fileRef = useRef(null);
+  function exportData() {
+    const blob = new Blob([JSON.stringify(state, null, 2)], {
+      type: 'application/json'
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `compass-backup-${todayISO()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+  function importData(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (data && data.version === SCHEMA_VERSION && Array.isArray(data.milestones)) {
+          dispatch({
+            type: 'replaceAll',
+            data
+          });
+          alert('データを読み込みました。');
+        } else alert('対応していないファイル形式です。');
+      } catch (err) {
+        alert('ファイルを読み込めませんでした。');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }
+  const card = {
+    background: C.ink0,
+    border: `0.5px solid ${C.ink2}`,
+    borderRadius: 4,
+    padding: '24px 26px',
+    marginBottom: 18
+  };
+  const cardTitle = {
+    fontSize: 13,
+    fontWeight: 700,
+    color: C.ink7,
+    marginBottom: 18
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: 620
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: card
+  }, /*#__PURE__*/React.createElement("div", {
+    style: cardTitle
+  }, "プロフィール"), /*#__PURE__*/React.createElement(Field, {
+    label: "表示名"
+  }, /*#__PURE__*/React.createElement("input", {
+    style: inputStyle,
+    value: name,
+    onChange: e => setName(e.target.value),
+    placeholder: "例：田中 優一",
+    onBlur: () => dispatch({
+      type: 'setProfile',
+      name
+    })
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: C.ink3
+    }
+  }, "入力欄から離れると自動保存されます。")), /*#__PURE__*/React.createElement("div", {
+    style: card
+  }, /*#__PURE__*/React.createElement("div", {
+    style: cardTitle
+  }, "目標"), /*#__PURE__*/React.createElement(Field, {
+    label: "目標タイトル"
+  }, /*#__PURE__*/React.createElement("input", {
+    style: inputStyle,
+    value: goalTitle,
+    onChange: e => setGoalTitle(e.target.value),
+    onBlur: () => dispatch({
+      type: 'setGoal',
+      goal: {
+        title: goalTitle.trim() || '目標',
+        targetDate: goalDate
+      }
+    })
+  })), /*#__PURE__*/React.createElement(Field, {
+    label: "目標日"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    style: inputStyle,
+    value: goalDate,
+    onChange: e => {
+      setGoalDate(e.target.value);
+      dispatch({
+        type: 'setGoal',
+        goal: {
+          title: goalTitle.trim() || '目標',
+          targetDate: e.target.value
+        }
+      });
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: C.ink4
+    }
+  }, "達成まであと ", /*#__PURE__*/React.createElement("span", {
+    style: mono({
+      color: C.ink7
+    })
+  }, daysUntil(goalDate)), " 日")), /*#__PURE__*/React.createElement("div", {
+    style: card
+  }, /*#__PURE__*/React.createElement("div", {
+    style: cardTitle
+  }, "データ管理"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 14,
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: C.ink6,
+      marginBottom: 3
+    }
+  }, "バックアップを書き出す"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: C.ink4
+    }
+  }, "全データをJSONファイルで保存（端末移行用）")), /*#__PURE__*/React.createElement(Btn, {
+    variant: "secondary",
+    onClick: exportData
+  }, "エクスポート")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 0.5,
+      background: C.ink2
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 14,
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: C.ink6,
+      marginBottom: 3
+    }
+  }, "バックアップを読み込む"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: C.ink4
+    }
+  }, "現在のデータを上書きします")), /*#__PURE__*/React.createElement(Btn, {
+    variant: "secondary",
+    onClick: () => fileRef.current && fileRef.current.click()
+  }, "インポート"), /*#__PURE__*/React.createElement("input", {
+    ref: fileRef,
+    type: "file",
+    accept: "application/json",
+    onChange: importData,
+    style: {
+      display: 'none'
+    }
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: card
+  }, /*#__PURE__*/React.createElement("div", {
+    style: cardTitle
+  }, "診断"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 14,
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: C.ink6,
+      marginBottom: 3
+    }
+  }, "キャリアタイプを再診断"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: C.ink4
+    }
+  }, "学習記録や目標はそのまま保持されます")), /*#__PURE__*/React.createElement(Btn, {
+    variant: "secondary",
+    onClick: onRestart
+  }, "再診断する"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...card,
+      borderColor: 'rgba(154,59,59,.3)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...cardTitle,
+      color: C.danger
+    }
+  }, "すべてのデータを削除"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 14,
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: C.ink5,
+      lineHeight: 1.7
+    }
+  }, "このブラウザに保存されたCompassのデータをすべて消去し、初期状態に戻します。元に戻せません。"), /*#__PURE__*/React.createElement(Btn, {
+    variant: "danger",
+    onClick: () => setConfirmWipe(true),
+    style: {
+      flexShrink: 0
+    }
+  }, "全消去"))), confirmWipe && /*#__PURE__*/React.createElement(ConfirmDialog, {
+    title: "すべてのデータを削除",
+    message: "本当にすべてのデータを削除しますか？この操作は元に戻せません。バックアップが必要な場合は先にエクスポートしてください。",
+    confirmLabel: "すべて削除する",
+    onConfirm: onWipe,
+    onClose: () => setConfirmWipe(false)
+  }));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Dashboard shell
+// ═══════════════════════════════════════════════════════════════════════════
+function Dashboard({
+  state,
+  stats,
+  dispatch,
+  onRestart,
+  onWipe
 }) {
   const [tab, setTab] = useState('dashboard');
-  const days = daysUntil(2027, 4, 15);
-  const typeName = resultType + '型キャリア';
+  const days = daysUntil(state.goal.targetDate);
+  const typeName = (state.diagnosis.resultType || 'T') + '型キャリア';
   const TABS = [{
     key: 'dashboard',
     label: 'ダッシュボード'
@@ -2632,6 +3916,9 @@ function PhaseDashboard({
   }, {
     key: 'log',
     label: '学習記録'
+  }, {
+    key: 'settings',
+    label: '設定'
   }];
   const tabBase = {
     padding: '12px 2px',
@@ -2662,7 +3949,8 @@ function PhaseDashboard({
       display: 'flex',
       alignItems: 'center',
       gap: 10,
-      marginBottom: 13
+      marginBottom: 13,
+      flexWrap: 'wrap'
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
@@ -2673,30 +3961,19 @@ function PhaseDashboard({
       padding: '4px 11px',
       borderRadius: 3
     }
-  }, typeName), /*#__PURE__*/React.createElement("span", {
+  }, typeName), state.profile.name && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 12,
       color: C.ink4
     }
-  }, "田中 優一 さん"), /*#__PURE__*/React.createElement("button", {
-    onClick: onRestart,
-    style: {
-      background: 'none',
-      border: `0.5px solid ${C.ink3}`,
-      borderRadius: 3,
-      fontSize: 11,
-      color: C.ink4,
-      padding: '3px 10px',
-      marginLeft: 4
-    }
-  }, "再診断")), /*#__PURE__*/React.createElement("h1", {
+  }, state.profile.name, " さん")), /*#__PURE__*/React.createElement("h1", {
     style: {
       fontSize: 26,
       fontWeight: 700,
       color: C.ink7,
       letterSpacing: '.01em'
     }
-  }, "目標：PMへの転職")), /*#__PURE__*/React.createElement("div", {
+  }, "目標：", state.goal.title)), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: 'right',
       flexShrink: 0
@@ -2708,11 +3985,10 @@ function PhaseDashboard({
       marginBottom: 3
     }
   }, "目標達成まで"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...mono(),
+    style: mono({
       color: C.ink7,
       lineHeight: 1
-    }
+    })
   }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 46,
@@ -2729,13 +4005,14 @@ function PhaseDashboard({
       color: C.ink4,
       marginTop: 5
     }
-  }, "2027年4月15日"))), /*#__PURE__*/React.createElement("div", {
+  }, fmtFull(state.goal.targetDate)))), /*#__PURE__*/React.createElement("div", {
     className: "tab-nav",
     style: {
       display: 'flex',
       gap: 30,
       borderBottom: `0.5px solid ${C.ink3}`,
-      marginBottom: 32
+      marginBottom: 32,
+      overflowX: 'auto'
     }
   }, TABS.map(t => /*#__PURE__*/React.createElement("button", {
     key: t.key,
@@ -2745,73 +4022,315 @@ function PhaseDashboard({
       ...tabBase,
       fontWeight: tab === t.key ? 500 : 400,
       color: tab === t.key ? C.ink7 : C.ink4,
-      borderBottom: tab === t.key ? `1.5px solid ${C.ink7}` : '1.5px solid transparent'
+      borderBottom: tab === t.key ? `1.5px solid ${C.ink7}` : '1.5px solid transparent',
+      whiteSpace: 'nowrap'
     }
   }, t.label))), /*#__PURE__*/React.createElement("div", {
     key: tab,
     className: "tab-content"
   }, tab === 'dashboard' && /*#__PURE__*/React.createElement(TabDashboard, {
-    resultType: resultType,
-    completedTasks: completedTasks,
-    onToggleTask: onToggleTask
+    state: state,
+    stats: stats,
+    onToggleTask: (msId, taskId) => dispatch({
+      type: 'toggleTask',
+      msId,
+      taskId
+    })
   }), tab === 'roadmap' && /*#__PURE__*/React.createElement(TabRoadmap, {
-    completedTasks: completedTasks,
-    onToggleTask: onToggleTask
-  }), tab === 'calendar' && /*#__PURE__*/React.createElement(TabCalendar, null), tab === 'log' && /*#__PURE__*/React.createElement(TabLog, null)));
+    state: state,
+    stats: stats,
+    dispatch: dispatch
+  }), tab === 'calendar' && /*#__PURE__*/React.createElement(TabCalendar, {
+    state: state,
+    stats: stats,
+    dispatch: dispatch
+  }), tab === 'log' && /*#__PURE__*/React.createElement(TabLog, {
+    state: state,
+    stats: stats,
+    dispatch: dispatch
+  }), tab === 'settings' && /*#__PURE__*/React.createElement(TabSettings, {
+    state: state,
+    dispatch: dispatch,
+    onRestart: onRestart,
+    onWipe: onWipe
+  })));
 }
 
-// ─── App root ─────────────────────────────────────────────────────────────────
-function App() {
-  const [phase, setPhase] = useState('welcome');
-  const [answers, setAnswers] = useState({});
-  const [completedTasks, setCompletedTasks] = useState({});
+// ═══════════════════════════════════════════════════════════════════════════
+// reducer
+// ═══════════════════════════════════════════════════════════════════════════
+function reducer(state, action) {
+  switch (action.type) {
+    case 'answer':
+      return {
+        ...state,
+        diagnosis: {
+          ...state.diagnosis,
+          answers: {
+            ...state.diagnosis.answers,
+            [action.qid]: action.idx
+          }
+        }
+      };
+    case 'finishDiagnosis':
+      return {
+        ...state,
+        diagnosis: {
+          ...state.diagnosis,
+          resultType: calcResultType(state.diagnosis.answers)
+        }
+      };
+    case 'completeOnboarding':
+      return {
+        ...state,
+        onboarded: true,
+        diagnosis: {
+          ...state.diagnosis,
+          resultType: state.diagnosis.resultType || calcResultType(state.diagnosis.answers)
+        }
+      };
+    case 'skipDiagnosis':
+      return {
+        ...state,
+        onboarded: true,
+        diagnosis: {
+          answers: {},
+          resultType: state.diagnosis.resultType || 'T'
+        }
+      };
+    case 'restartDiagnosis':
+      return {
+        ...state,
+        onboarded: false,
+        diagnosis: {
+          answers: {},
+          resultType: null
+        }
+      };
+    case 'setProfile':
+      return {
+        ...state,
+        profile: {
+          ...state.profile,
+          name: action.name
+        }
+      };
+    case 'setGoal':
+      return {
+        ...state,
+        goal: action.goal
+      };
+    case 'toggleTask':
+      return {
+        ...state,
+        milestones: state.milestones.map(m => m.id !== action.msId ? m : {
+          ...m,
+          tasks: m.tasks.map(t => t.id !== action.taskId ? t : {
+            ...t,
+            done: !t.done
+          })
+        })
+      };
+    case 'addMs':
+      return {
+        ...state,
+        milestones: [...state.milestones, {
+          id: uid(),
+          name: action.data.name,
+          period: action.data.period,
+          tasks: []
+        }]
+      };
+    case 'editMs':
+      return {
+        ...state,
+        milestones: state.milestones.map(m => m.id !== action.id ? m : {
+          ...m,
+          name: action.data.name,
+          period: action.data.period
+        })
+      };
+    case 'delMs':
+      return {
+        ...state,
+        milestones: state.milestones.filter(m => m.id !== action.id)
+      };
+    case 'addTask':
+      return {
+        ...state,
+        milestones: state.milestones.map(m => m.id !== action.msId ? m : {
+          ...m,
+          tasks: [...m.tasks, {
+            id: uid(),
+            label: action.label,
+            done: false
+          }]
+        })
+      };
+    case 'editTask':
+      return {
+        ...state,
+        milestones: state.milestones.map(m => m.id !== action.msId ? m : {
+          ...m,
+          tasks: m.tasks.map(t => t.id !== action.taskId ? t : {
+            ...t,
+            label: action.label
+          })
+        })
+      };
+    case 'delTask':
+      return {
+        ...state,
+        milestones: state.milestones.map(m => m.id !== action.msId ? m : {
+          ...m,
+          tasks: m.tasks.filter(t => t.id !== action.taskId)
+        })
+      };
+    case 'addSubject':
+      return {
+        ...state,
+        subjects: [...state.subjects, {
+          id: uid(),
+          name: action.name
+        }]
+      };
+    case 'renameSubject':
+      return {
+        ...state,
+        subjects: state.subjects.map(s => s.id !== action.id ? s : {
+          ...s,
+          name: action.name
+        })
+      };
+    case 'delSubject':
+      return {
+        ...state,
+        subjects: state.subjects.filter(s => s.id !== action.id),
+        logs: state.logs.filter(l => l.subjectId !== action.id)
+      };
+    case 'addLog':
+      return {
+        ...state,
+        logs: [...state.logs, {
+          id: uid(),
+          ...action.data
+        }]
+      };
+    case 'editLog':
+      return {
+        ...state,
+        logs: state.logs.map(l => l.id !== action.id ? l : {
+          ...l,
+          ...action.data
+        })
+      };
+    case 'delLog':
+      return {
+        ...state,
+        logs: state.logs.filter(l => l.id !== action.id)
+      };
+    case 'addEvent':
+      return {
+        ...state,
+        events: [...state.events, {
+          id: uid(),
+          ...action.data
+        }]
+      };
+    case 'editEvent':
+      return {
+        ...state,
+        events: state.events.map(e => e.id !== action.id ? e : {
+          ...e,
+          ...action.data
+        })
+      };
+    case 'delEvent':
+      return {
+        ...state,
+        events: state.events.filter(e => e.id !== action.id)
+      };
+    case 'replaceAll':
+      return action.data;
+    default:
+      return state;
+  }
+}
 
-  // persist to localStorage
+// ═══════════════════════════════════════════════════════════════════════════
+// App root
+// ═══════════════════════════════════════════════════════════════════════════
+function App() {
+  const [state, setState] = useState(() => loadState() || makeSeed());
+  const dispatch = action => setState(prev => reducer(prev, action));
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('compass-state') || '{}');
-      if (saved.phase) {
-        setPhase(saved.phase);
-        setAnswers(saved.answers || {});
-        setCompletedTasks(saved.completedTasks || {});
-      }
-    } catch (e) {}
-  }, []);
-  useEffect(() => {
-    try {
-      localStorage.setItem('compass-state', JSON.stringify({
-        phase,
-        answers,
-        completedTasks
-      }));
-    } catch (e) {}
-  }, [phase, answers, completedTasks]);
-  function go(p) {
-    setPhase(p);
+    saveState(state);
+  }, [state]);
+  const stats = useMemo(() => computeStats(state), [state]);
+
+  // onboarding routing
+  const [onbStep, setOnbStep] = useState('welcome'); // welcome | qa | result
+
+  function go(step) {
+    setOnbStep(step);
     window.scrollTo(0, 0);
   }
-  function handleAnswer(qId, idx) {
-    setAnswers(prev => ({
-      ...prev,
-      [qId]: idx
-    }));
-  }
-  function handleToggleTask(key, val) {
-    setCompletedTasks(prev => ({
-      ...prev,
-      [key]: val
-    }));
+  function handleWipe() {
+    const seed = makeSeed();
+    setState(seed);
+    setOnbStep('welcome');
+    window.scrollTo(0, 0);
   }
   function handleRestart() {
-    try {
-      localStorage.removeItem('compass-state');
-    } catch (e) {}
-    setPhase('welcome');
-    setAnswers({});
-    setCompletedTasks({});
+    dispatch({
+      type: 'restartDiagnosis'
+    });
+    setOnbStep('welcome');
     window.scrollTo(0, 0);
   }
-  const resultType = calcResultType(answers);
+  let body;
+  if (!state.onboarded) {
+    if (onbStep === 'welcome') body = /*#__PURE__*/React.createElement(PhaseWelcome, {
+      onStart: () => go('qa'),
+      onSkip: () => dispatch({
+        type: 'skipDiagnosis'
+      })
+    });else if (onbStep === 'qa') body = /*#__PURE__*/React.createElement(PhaseQa, {
+      answers: state.diagnosis.answers,
+      onAnswer: (qid, idx) => dispatch({
+        type: 'answer',
+        qid,
+        idx
+      }),
+      onBack: () => go('welcome'),
+      onFinish: () => {
+        dispatch({
+          type: 'finishDiagnosis'
+        });
+        go('result');
+      }
+    });else body = /*#__PURE__*/React.createElement(PhaseResult, {
+      answers: state.diagnosis.answers,
+      onDashboard: () => dispatch({
+        type: 'completeOnboarding'
+      }),
+      onRestart: () => {
+        dispatch({
+          type: 'restartDiagnosis'
+        });
+        go('welcome');
+      },
+      onBack: () => go('qa')
+    });
+  } else {
+    body = /*#__PURE__*/React.createElement(Dashboard, {
+      state: state,
+      stats: stats,
+      dispatch: dispatch,
+      onRestart: handleRestart,
+      onWipe: handleWipe
+    });
+  }
   return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: '100vh',
@@ -2823,23 +4342,6 @@ function App() {
     style: {
       flex: 1
     }
-  }, phase === 'welcome' && /*#__PURE__*/React.createElement(PhaseWelcome, {
-    onStart: () => go('qa')
-  }), phase === 'qa' && /*#__PURE__*/React.createElement(PhaseQa, {
-    answers: answers,
-    onAnswer: handleAnswer,
-    onBack: () => go('welcome'),
-    onFinish: () => go('result')
-  }), phase === 'result' && /*#__PURE__*/React.createElement(PhaseResult, {
-    answers: answers,
-    onDashboard: () => go('dashboard'),
-    onRestart: handleRestart,
-    onBack: () => go('qa')
-  }), phase === 'dashboard' && /*#__PURE__*/React.createElement(PhaseDashboard, {
-    resultType: resultType,
-    completedTasks: completedTasks,
-    onToggleTask: handleToggleTask,
-    onRestart: handleRestart
-  })));
+  }, body));
 }
 ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));

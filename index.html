@@ -41,9 +41,20 @@
   .task-row{transition:background .1s;border-radius:3px;padding:1px 4px;margin:-1px -4px}
   .task-row:hover{background:rgba(0,0,0,.04)}
   .tab-btn{transition:color .15s}
+  .btn-danger{transition:background .15s}
+  .btn-danger:hover{background:#fbf3f3 !important}
+  .icon-btn{transition:border-color .15s,background .15s}
+  .icon-btn:hover{background:#fafaf9;border-color:#8f8d88}
+  .cal-day{transition:filter .12s}
+  .cal-day:hover{filter:brightness(.94)}
+  .log-row:hover,.event-row:hover{background:rgba(0,0,0,.012)}
 
   /* ── tab content fade ── */
   .tab-content{animation:fadeUp .18s ease both}
+  /* ── modal ── */
+  @keyframes modalIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+  .modal-card{animation:modalIn .16s ease both}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:#525048 !important}
 
   /* ── responsive breakpoints ── */
   @media(max-width:700px){
