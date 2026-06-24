@@ -92,6 +92,93 @@ function calcResultType(answers) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// career templates — field → specialty → recommended roadmap
+// ═══════════════════════════════════════════════════════════════════════════
+const GENERIC_MILESTONES = [
+  { name:'現状把握とゴール設定', tasks:[] },
+  { name:'基礎を固める',         tasks:[] },
+  { name:'実践・スキルを証明する', tasks:[] },
+  { name:'応用・成果を積み上げる', tasks:[] },
+  { name:'目標を達成する',         tasks:[] },
+];
+
+const CAREER_TEMPLATES = [
+  { id:'it', name:'情報系 / IT', specialties:[
+    { id:'data', name:'データマネジメント', goal:'データベーススペシャリスト合格', milestones:[
+      { name:'IT・SQLの基礎', tasks:['基本情報技術者 取得','SQL基礎（SELECT・JOIN・集計）','リレーショナルDBの仕組みを理解'] },
+      { name:'設計スキルの習得', tasks:['正規化とER図','論理・物理設計','インデックス／トランザクション'] },
+      { name:'応用情報の取得', tasks:['応用情報技術者 取得','データベース分野を重点学習'] },
+      { name:'専門資格（DBスペシャリスト）', tasks:['午前II 過去問演習','午後I 記述対策','午後II 事例対策'] },
+      { name:'実務・成果づくり', tasks:['データ基盤設計の演習','分析用データマート構築','学習成果をポートフォリオ化'] },
+    ]},
+    { id:'infra', name:'インフラ / クラウド', goal:'AWS認定 + ネットワークスペシャリスト', milestones:[
+      { name:'ネットワーク基礎', tasks:['基本情報技術者 取得','TCP/IP・OSI参照モデル','Linux基礎コマンド'] },
+      { name:'クラウド入門', tasks:['AWS Cloud Practitioner 取得','VPC／EC2／S3の理解','IAMとセキュリティ基礎'] },
+      { name:'クラウド設計', tasks:['AWS SAA 取得','可用性・スケーリング設計','IaC（Terraform）入門'] },
+      { name:'ネットワーク専門', tasks:['応用情報技術者 取得','ネットワークスペシャリスト 午後対策'] },
+      { name:'実務・成果づくり', tasks:['3層Webアプリの構築','監視・運用設計','ポートフォリオ公開'] },
+    ]},
+    { id:'security', name:'セキュリティ', goal:'情報処理安全確保支援士 合格', milestones:[
+      { name:'基礎', tasks:['基本情報技術者 取得','暗号・認証の基礎','ネットワークの基礎'] },
+      { name:'応用', tasks:['応用情報技術者 取得','脆弱性とインシデント対応','セキュアコーディング'] },
+      { name:'専門知識', tasks:['支援士 午前II 対策','リスクマネジメント','関連法規の理解'] },
+      { name:'記述対策', tasks:['午後I 事例演習','午後II 長文対策','過去問 ×5年分'] },
+      { name:'実務・成果づくり', tasks:['脆弱性診断の演習','セキュリティ設計レビュー','CTFに参加'] },
+    ]},
+    { id:'dev', name:'ソフトウェア開発', goal:'応用情報技術者 + 実務スキル', milestones:[
+      { name:'プログラミング基礎', tasks:['言語の基礎（変数〜関数）','Git／GitHub','基本情報技術者 取得'] },
+      { name:'アルゴリズム・設計', tasks:['データ構造とアルゴリズム','オブジェクト指向設計','テストの基礎'] },
+      { name:'応用情報の取得', tasks:['応用情報技術者 取得','システム設計の理解'] },
+      { name:'実践開発', tasks:['Webアプリを1本作る','REST API設計','CI/CD入門'] },
+      { name:'成果・発信', tasks:['ポートフォリオ公開','技術記事を書く','OSSにコントリビュート'] },
+    ]},
+    { id:'pm', name:'PM / マネジメント', goal:'プロジェクトマネージャ試験 / PMP', milestones:[
+      { name:'基礎知識', tasks:['応用情報技術者 取得','PMBOKの基礎','アジャイル／スクラム基礎'] },
+      { name:'実務経験', tasks:['小規模プロジェクトのリード','課題・リスク管理','ステークホルダー調整'] },
+      { name:'専門資格', tasks:['プロジェクトマネージャ 午前II','午後I 事例対策'] },
+      { name:'論述対策', tasks:['午後II 論文対策','PMP 受験準備'] },
+      { name:'成果づくり', tasks:['プロジェクト完遂の実績化','振り返り・改善','チームマネジメント'] },
+    ]},
+  ]},
+  { id:'biz', name:'ビジネス系', specialties:[
+    { id:'account', name:'会計・財務', goal:'日商簿記1級 合格', milestones:[
+      { name:'簿記入門', tasks:['簿記3級 取得','仕訳の基礎','試算表・精算表'] },
+      { name:'商業簿記', tasks:['簿記2級（商業）取得','連結会計の基礎'] },
+      { name:'工業簿記', tasks:['簿記2級（工業）取得','原価計算'] },
+      { name:'上位資格', tasks:['簿記1級 商業簿記・会計学','簿記1級 工業簿記・原価計算'] },
+      { name:'実務応用', tasks:['財務諸表分析','管理会計の実践'] },
+    ]},
+    { id:'marketing', name:'マーケティング', goal:'マーケティング実務 + 検定2級', milestones:[
+      { name:'基礎', tasks:['マーケの基本概念','4P／STP','マーケティング検定3級'] },
+      { name:'デジタル', tasks:['Web解析（GA4）基礎','SEO／広告運用入門','マーケティング検定2級'] },
+      { name:'実践', tasks:['SNS運用の実務','コンテンツ企画','A/Bテスト'] },
+      { name:'データ活用', tasks:['データ分析基礎','顧客分析（RFM）','ダッシュボード作成'] },
+      { name:'成果づくり', tasks:['施策の成果をまとめる','ケーススタディ作成'] },
+    ]},
+  ]},
+  { id:'lang', name:'語学', specialties:[
+    { id:'english', name:'英語', goal:'TOEIC 900 / ビジネス英語', milestones:[
+      { name:'基礎固め', tasks:['文法の総復習','単語帳を1冊完了','TOEIC 600達成'] },
+      { name:'リスニング強化', tasks:['シャドーイング習慣化','Part3／4対策','TOEIC 730達成'] },
+      { name:'リーディング強化', tasks:['長文速読','Part5／7対策','多読100万語'] },
+      { name:'スコアアップ', tasks:['模試 ×5','弱点補強','TOEIC 860達成'] },
+      { name:'実践', tasks:['ビジネス英会話','英語で発信','TOEIC 900達成'] },
+    ]},
+  ]},
+  { id:'other', name:'その他・自分で設定', specialties:[
+    { id:'custom', name:'自分で設定する', goal:'', milestones: GENERIC_MILESTONES },
+  ]},
+];
+const ROLES = ['学生','社会人 1〜3年目','中堅（4年目〜）','マネージャー／管理職','転職を目指している','その他'];
+
+function findField(id) { return CAREER_TEMPLATES.find(f => f.id === id); }
+function findSpecialty(fieldId, specId) { const f = findField(fieldId); return f && f.specialties.find(s => s.id === specId); }
+function specLabel(fieldId, specId) { const f = findField(fieldId), s = findSpecialty(fieldId, specId); return f && s ? `${f.name} / ${s.name}` : ''; }
+function instantiateMilestones(tmplMs) {
+  return (tmplMs || []).map(m => ({ id:uid(), name:m.name, period:'', tasks:(m.tasks||[]).map(label => ({ id:uid(), label, done:false })) }));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // storage + seed
 // ═══════════════════════════════════════════════════════════════════════════
 const STORE_KEY = 'compass-v2';
@@ -101,19 +188,14 @@ function makeSeed() {
   const today = new Date();
   return {
     version: SCHEMA_VERSION,
-    profile: { name: '' },
+    profile: { name: '', field: '', specialty: '', role: '' },
     onboarded: false,
     setupStep: 'welcome',
+    appliedTemplate: null,
     diagnosis: { answers: {}, resultType: null },
     goal: { title: '', targetDate: ymd(addDays(today, 300)) },
     subjects: [],
-    milestones: [
-      { id:uid(), name:'現状把握とゴール設定', period:'', tasks:[] },
-      { id:uid(), name:'基礎を固める',         period:'', tasks:[] },
-      { id:uid(), name:'実践・スキルを証明する', period:'', tasks:[] },
-      { id:uid(), name:'応用・成果を積み上げる', period:'', tasks:[] },
-      { id:uid(), name:'目標を達成する',         period:'', tasks:[] },
-    ],
+    milestones: instantiateMilestones(GENERIC_MILESTONES),
     logs: [],
     events: [],
   };
@@ -1076,10 +1158,14 @@ function SubjectManager({ state, dispatch, onClose }) {
 // ═══════════════════════════════════════════════════════════════════════════
 function TabSettings({ state, dispatch, onRestart, onWipe }) {
   const [name, setName] = useState(state.profile.name);
+  const [field, setField] = useState(state.profile.field || '');
+  const [spec, setSpec] = useState(state.profile.specialty || '');
+  const [role, setRole] = useState(state.profile.role || '');
   const [goalTitle, setGoalTitle] = useState(state.goal.title);
   const [goalDate, setGoalDate] = useState(state.goal.targetDate);
   const [confirmWipe, setConfirmWipe] = useState(false);
   const fileRef = useRef(null);
+  const fieldObj = findField(field);
 
   function exportData() {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
@@ -1113,9 +1199,29 @@ function TabSettings({ state, dispatch, onRestart, onWipe }) {
       <div style={card}>
         <div style={cardTitle}>プロフィール</div>
         <Field label="表示名">
-          <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder="例：田中 優一" onBlur={() => dispatch({ type:'setProfile', name })}/>
+          <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder="例：田中 優一" onBlur={() => dispatch({ type:'setProfile', profile:{ name } })}/>
         </Field>
-        <div style={{ fontSize:11, color:C.ink3 }}>入力欄から離れると自動保存されます。</div>
+        <Field label="分野">
+          <select style={inputStyle} value={field} onChange={e => { const f=e.target.value; setField(f); setSpec(''); dispatch({ type:'setProfile', profile:{ field:f, specialty:'' } }); }}>
+            <option value="">未設定</option>
+            {CAREER_TEMPLATES.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+          </select>
+        </Field>
+        {fieldObj && (
+          <Field label="領域">
+            <select style={inputStyle} value={spec} onChange={e => { const s=e.target.value; setSpec(s); dispatch({ type:'setProfile', profile:{ specialty:s } }); }}>
+              <option value="">未設定</option>
+              {fieldObj.specialties.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </Field>
+        )}
+        <Field label="現在の立場 / 役割（任意）">
+          <select style={inputStyle} value={role} onChange={e => { setRole(e.target.value); dispatch({ type:'setProfile', profile:{ role:e.target.value } }); }}>
+            <option value="">未設定</option>
+            {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+        </Field>
+        <div style={{ fontSize:11, color:C.ink3, lineHeight:1.7 }}>分野・領域は、おすすめロードマップの基準や（将来の）キャリア共有のために使われます。ここで変更しても既存のマイルストーンは保持されます。</div>
       </div>
 
       <div style={card}>
@@ -1191,31 +1297,81 @@ function backBtn(onBack) {
 // ═══════════════════════════════════════════════════════════════════════════
 function SetupProfile({ state, dispatch, onNext, onBack }) {
   const [name, setName] = useState(state.profile.name || '');
+  const [field, setField] = useState(state.profile.field || '');
+  const [spec, setSpec] = useState(state.profile.specialty || '');
+  const [role, setRole] = useState(state.profile.role || '');
   const [title, setTitle] = useState(state.goal.title || '');
   const [date, setDate] = useState(state.goal.targetDate || todayISO());
-  const valid = title.trim() && date;
+  const [goalTouched, setGoalTouched] = useState(!!state.goal.title);
+
+  const fieldObj = findField(field);
+  const valid = field && spec && title.trim() && date;
+
+  function pickField(fid) { setField(fid); setSpec(''); }
+  function pickSpec(sid) {
+    setSpec(sid);
+    const s = findSpecialty(field, sid);
+    if (s && !goalTouched) setTitle(s.goal);
+  }
   function next() {
     if (!valid) return;
-    dispatch({ type:'setProfile', name });
+    dispatch({ type:'setProfile', profile:{ name, field, specialty:spec, role } });
     dispatch({ type:'setGoal', goal:{ title:title.trim(), targetDate:date } });
+    if (`${field}/${spec}` !== state.appliedTemplate) dispatch({ type:'applyTemplate', fieldId:field, specId:spec });
     onNext();
   }
+
+  const chip = (selected) => ({
+    padding:'9px 15px', borderRadius:99, fontSize:12.5, cursor:'pointer', whiteSpace:'nowrap',
+    background:selected?C.ink7:C.ink0, color:selected?C.ink0:C.ink6,
+    border:`0.5px solid ${selected?C.ink7:C.ink3}`, transition:'background .15s,border-color .15s,color .15s',
+  });
+
   return (
     <div className="phase" style={{ maxWidth:560, margin:'0 auto', padding:'48px 24px 72px' }}>
       {backBtn(onBack)}
       <StepDots active={2}/>
       <div style={mono({ fontSize:11, letterSpacing:'.16em', color:C.ink4, marginBottom:14 })}>STEP 2 ／ プロフィール</div>
       <h1 style={{ fontSize:28, lineHeight:1.45, fontWeight:700, color:C.ink7, margin:'0 0 14px' }}>あなたと目標を<br/>教えてください</h1>
-      <p style={{ fontSize:14, lineHeight:1.9, color:C.ink5, margin:'0 0 32px' }}>表示名と、これから目指すゴール・達成したい日を設定します。あとから設定画面で変更できます。</p>
+      <p style={{ fontSize:14, lineHeight:1.9, color:C.ink5, margin:'0 0 32px' }}>分野と領域を選ぶと、その道のおすすめロードマップ（マイルストーンとタスク）を次のステップに自動で用意します。あとから自由に編集できます。</p>
+
       <div style={{ background:C.ink0, border:`0.5px solid ${C.ink2}`, borderRadius:4, padding:'26px 24px', marginBottom:32 }}>
         <Field label="表示名（任意）"><input style={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder="例：田中 優一"/></Field>
-        <Field label="達成したい目標"><input style={inputStyle} value={title} onChange={e => setTitle(e.target.value)} placeholder="例：PMへの転職 / TOEIC 900点 / 〇〇資格の取得" autoFocus/></Field>
+
+        <div style={{ marginBottom:16 }}>
+          <span style={fieldLabel}>分野</span>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+            {CAREER_TEMPLATES.map(f => <button key={f.id} className="chip" style={chip(field===f.id)} onClick={() => pickField(f.id)}>{f.name}</button>)}
+          </div>
+        </div>
+
+        {fieldObj && (
+          <div style={{ marginBottom:16 }}>
+            <span style={fieldLabel}>領域</span>
+            <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+              {fieldObj.specialties.map(s => <button key={s.id} className="chip" style={chip(spec===s.id)} onClick={() => pickSpec(s.id)}>{s.name}</button>)}
+            </div>
+          </div>
+        )}
+
+        <Field label="現在の立場 / 役割（任意）">
+          <select style={inputStyle} value={role} onChange={e => setRole(e.target.value)}>
+            <option value="">選択しない</option>
+            {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+        </Field>
+
+        <Field label="達成したい目標">
+          <input style={inputStyle} value={title} onChange={e => { setTitle(e.target.value); setGoalTouched(true); }} placeholder="例：データベーススペシャリスト合格 / TOEIC 900点"/>
+        </Field>
         <label style={{ display:'block' }}>
           <span style={fieldLabel}>目標日</span>
           <input type="date" style={inputStyle} value={date} onChange={e => setDate(e.target.value)}/>
         </label>
         {valid && <div style={{ fontSize:11, color:C.ink4, marginTop:14 }}>達成まであと <span style={mono({ color:C.ink7 })}>{daysUntil(date)}</span> 日</div>}
       </div>
+
+      {!field && <div style={{ fontSize:11.5, color:C.ink4, textAlign:'center', marginBottom:14 }}>まず分野と領域を選んでください</div>}
       <Btn variant="primary" disabled={!valid} style={{ width:'100%', padding:16, fontSize:14.5, opacity:valid?1:.4 }} onClick={next}>次へ：マイルストーン設定</Btn>
     </div>
   );
@@ -1227,17 +1383,26 @@ function SetupProfile({ state, dispatch, onNext, onBack }) {
 function SetupMilestones({ state, dispatch, onNext, onBack }) {
   const [edit, setEdit] = useState(null);   // {milestone} | {new:true}
   const [confirm, setConfirm] = useState(null);
+  const [reapply, setReapply] = useState(false);
   const ms = state.milestones;
   const valid = ms.length > 0;
+  const tmplName = specLabel(state.profile.field, state.profile.specialty);
   return (
     <div className="phase" style={{ maxWidth:620, margin:'0 auto', padding:'48px 24px 72px' }}>
       {backBtn(onBack)}
       <StepDots active={3}/>
       <div style={mono({ fontSize:11, letterSpacing:'.16em', color:C.ink4, marginBottom:14 })}>STEP 3 ／ マイルストーン設定</div>
       <h1 style={{ fontSize:28, lineHeight:1.45, fontWeight:700, color:C.ink7, margin:'0 0 14px' }}>目標までの段階を<br/>決めましょう</h1>
-      <p style={{ fontSize:14, lineHeight:1.9, color:C.ink5, margin:'0 0 28px' }}>
-        「{state.goal.title || '目標'}」を達成するまでの大きな段階を、<strong style={{ color:C.ink6 }}>基盤（上）から頂点（下）</strong>の順に並べます。テンプレートを編集しても、作り直してもOKです。
+      <p style={{ fontSize:14, lineHeight:1.9, color:C.ink5, margin:'0 0 24px' }}>
+        「{state.goal.title || '目標'}」を達成するまでの大きな段階を、<strong style={{ color:C.ink6 }}>基盤（上）から頂点（下）</strong>の順に並べます。自由に編集・並べ替え・追加できます。
       </p>
+
+      {tmplName && (
+        <div style={{ display:'flex', alignItems:'center', gap:12, background:C.accentLight, border:`0.5px solid ${C.accent}33`, borderRadius:4, padding:'12px 16px', marginBottom:24 }}>
+          <span style={{ fontSize:12, color:C.ink6, flex:1, lineHeight:1.6 }}><strong style={{ color:C.accent }}>{tmplName}</strong> のおすすめ構成です。</span>
+          <button onClick={() => setReapply(true)} style={{ background:C.ink0, border:`0.5px solid ${C.ink3}`, borderRadius:3, fontSize:11.5, color:C.ink5, padding:'6px 12px', whiteSpace:'nowrap' }}>おすすめを再適用</button>
+        </div>
+      )}
 
       <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:18 }}>
         {ms.map((m,i) => (
@@ -1267,6 +1432,7 @@ function SetupMilestones({ state, dispatch, onNext, onBack }) {
 
       {edit && <MilestoneModal milestone={edit.milestone} onClose={() => setEdit(null)} onSave={(data) => { dispatch(edit.new ? { type:'addMs', data } : { type:'editMs', id:edit.milestone.id, data }); setEdit(null); }}/>}
       {confirm && <ConfirmDialog title="段階を削除" message={`「${confirm.name}」を削除しますか？`} onConfirm={() => dispatch({ type:'delMs', id:confirm.id })} onClose={() => setConfirm(null)}/>}
+      {reapply && <ConfirmDialog title="おすすめを再適用" message={`「${tmplName}」のおすすめマイルストーンとタスクで、現在の内容を置き換えます。編集した内容は失われます。よろしいですか？`} confirmLabel="再適用する" onConfirm={() => dispatch({ type:'applyTemplate', fieldId:state.profile.field, specId:state.profile.specialty })} onClose={() => setReapply(false)}/>}
     </div>
   );
 }
@@ -1341,6 +1507,7 @@ function Dashboard({ state, stats, dispatch, onRestart, onWipe }) {
         <div>
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:13, flexWrap:'wrap' }}>
             <span style={{ fontSize:11, letterSpacing:'.06em', color:C.ink0, background:C.ink7, padding:'4px 11px', borderRadius:3 }}>{typeName}</span>
+            {specLabel(state.profile.field, state.profile.specialty) && <span style={{ fontSize:11, color:C.ink5, background:C.ink1, border:`0.5px solid ${C.ink2}`, padding:'4px 10px', borderRadius:3 }}>{specLabel(state.profile.field, state.profile.specialty)}</span>}
             {state.profile.name && <span style={{ fontSize:12, color:C.ink4 }}>{state.profile.name} さん</span>}
           </div>
           <h1 style={{ fontSize:26, fontWeight:700, color:C.ink7, letterSpacing:'.01em' }}>目標：{state.goal.title}</h1>
@@ -1402,7 +1569,12 @@ function reducer(state, action) {
       return { ...state, milestones: arr };
     }
     case 'setProfile':
-      return { ...state, profile: { ...state.profile, name: action.name } };
+      return { ...state, profile: { ...state.profile, ...action.profile } };
+    case 'applyTemplate': {
+      const spec = findSpecialty(action.fieldId, action.specId);
+      if (!spec) return state;
+      return { ...state, milestones: instantiateMilestones(spec.milestones), appliedTemplate: `${action.fieldId}/${action.specId}` };
+    }
     case 'setGoal':
       return { ...state, goal: action.goal };
     case 'toggleTask':
