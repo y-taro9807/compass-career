@@ -32,6 +32,31 @@ function mondayOf(d) { const x = startOfDay(d); const wd = (x.getDay()+6)%7; x.s
 function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate()+n); return x; }
 const round1 = n => Math.round(n*10)/10;
 
+// utf-8 safe base64 (for shareable links)
+function b64encode(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin);
+}
+function b64decode(b64) {
+  const bin = atob(b64);
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+function copyText(text, okMsg) {
+  const ok = () => { if (okMsg) alert(okMsg); };
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand('copy'); ok(); } catch (e) { alert('コピーできませんでした'); }
+    ta.remove();
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(ok).catch(fallback);
+  } else fallback();
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // diagnosis fixed data
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1490,6 +1515,7 @@ function SetupRoadmap({ state, dispatch, onComplete, onBack }) {
 // ═══════════════════════════════════════════════════════════════════════════
 function Dashboard({ state, stats, dispatch, onRestart, onWipe }) {
   const [tab, setTab] = useState('dashboard');
+  const [showSummary, setShowSummary] = useState(false);
   const days = daysUntil(state.goal.targetDate);
   const typeName = (state.diagnosis.resultType || 'T') + '型キャリア';
   const TABS = [
@@ -1509,6 +1535,7 @@ function Dashboard({ state, stats, dispatch, onRestart, onWipe }) {
             <span style={{ fontSize:11, letterSpacing:'.06em', color:C.ink0, background:C.ink7, padding:'4px 11px', borderRadius:3 }}>{typeName}</span>
             {specLabel(state.profile.field, state.profile.specialty) && <span style={{ fontSize:11, color:C.ink5, background:C.ink1, border:`0.5px solid ${C.ink2}`, padding:'4px 10px', borderRadius:3 }}>{specLabel(state.profile.field, state.profile.specialty)}</span>}
             {state.profile.name && <span style={{ fontSize:12, color:C.ink4 }}>{state.profile.name} さん</span>}
+            <button onClick={() => setShowSummary(true)} style={{ background:'none', border:`0.5px solid ${C.ink3}`, borderRadius:3, fontSize:11, color:C.ink5, padding:'4px 11px' }}>共有</button>
           </div>
           <h1 style={{ fontSize:26, fontWeight:700, color:C.ink7, letterSpacing:'.01em' }}>目標：{state.goal.title}</h1>
         </div>
@@ -1538,6 +1565,7 @@ function Dashboard({ state, stats, dispatch, onRestart, onWipe }) {
         {tab==='log'       && <TabLog state={state} stats={stats} dispatch={dispatch}/>}
         {tab==='settings'  && <TabSettings state={state} dispatch={dispatch} onRestart={onRestart} onWipe={onWipe}/>}
       </div>
+      {showSummary && <SummaryCard data={buildShareData(state, stats)} own={true} onClose={() => setShowSummary(false)}/>}
     </div>
   );
 }
@@ -1617,6 +1645,159 @@ function reducer(state, action) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Shareable career summary card
+// ═══════════════════════════════════════════════════════════════════════════
+function buildShareData(state, stats) {
+  return {
+    v: 1,
+    name: state.profile.name || '',
+    type: state.diagnosis.resultType || '',
+    field: state.profile.field || '',
+    spec: state.profile.specialty || '',
+    role: state.profile.role || '',
+    goal: state.goal.title || '',
+    target: state.goal.targetDate || '',
+    overall: stats.overallPct,
+    hours: stats.totalHours,
+    days: stats.studyDays,
+    streak: stats.streak,
+    msDone: stats.milestones.filter(m => m.status === '完了').length,
+    subjects: stats.subjectTotals.slice(0, 4).map(s => ({ n: s.name, h: s.h })),
+    milestones: stats.milestones.map(m => ({ n: m.name, p: m.pct, s: m.status })),
+  };
+}
+function shareURL(data) {
+  return location.origin + location.pathname + '#share=' + b64encode(JSON.stringify(data));
+}
+function shareText(data) {
+  const lines = [
+    '【Compass キャリアサマリー】',
+    data.name ? `名前：${data.name}` : null,
+    specLabel(data.field, data.spec) ? `分野：${specLabel(data.field, data.spec)}` : null,
+    data.role ? `立場：${data.role}` : null,
+    data.goal ? `目標：${data.goal}${data.target ? `（${fmtFull(data.target)}）` : ''}` : null,
+    `進捗：${data.overall}%（完了マイルストーン ${data.msDone}/${data.milestones.length}）`,
+    `学習：累計${data.hours}h ／ ${data.days}日 ／ 連続${data.streak}日`,
+    '',
+    'ロードマップ：',
+    ...data.milestones.map((m, i) => `${pad2(i+1)} [${m.s}] ${m.n}（${m.p}%）`),
+  ];
+  return lines.filter(l => l !== null).join('\n');
+}
+
+function SummaryCard({ data, own, onClose }) {
+  const sl = specLabel(data.field, data.spec);
+  const days = data.target ? daysUntil(data.target) : null;
+  const subjTotal = data.subjects.reduce((a,s) => a + s.h, 0) || 1;
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(20,20,19,.5)', display:'flex', alignItems:'flex-start', justifyContent:'center', padding:'5vh 16px 40px', zIndex:60, overflowY:'auto' }}>
+      <div className="modal-card" style={{ background:C.ink0, borderRadius:6, width:'100%', maxWidth:680, boxShadow:'0 12px 40px rgba(0,0,0,.18)', overflow:'hidden' }}>
+        {/* dark banner header */}
+        <div style={{ background:C.ink7, padding:'26px 30px' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:9, marginBottom:18 }}>
+            <span style={{ width:11, height:11, border:`1.5px solid ${C.ink0}`, borderRadius:99, display:'inline-block' }}/>
+            <span style={{ color:C.ink0, fontSize:11, letterSpacing:'.24em', fontWeight:500 }}>COMPASS</span>
+            <span style={{ color:C.ink4, fontSize:10.5, letterSpacing:'.05em' }}>キャリアサマリー</span>
+          </div>
+          <div style={{ fontSize:24, fontWeight:700, color:C.ink0, marginBottom:12 }}>{data.name || '名称未設定'} <span style={{ fontSize:14, color:C.ink4, fontWeight:400 }}>さんのキャリア</span></div>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+            {data.type && <span style={{ fontSize:11, color:C.ink7, background:C.ink0, padding:'4px 11px', borderRadius:99, fontWeight:500 }}>{data.type}型キャリア</span>}
+            {sl && <span style={{ fontSize:11, color:C.ink2, border:'0.5px solid rgba(255,255,255,.3)', padding:'4px 11px', borderRadius:99 }}>{sl}</span>}
+            {data.role && <span style={{ fontSize:11, color:C.ink2, border:'0.5px solid rgba(255,255,255,.3)', padding:'4px 11px', borderRadius:99 }}>{data.role}</span>}
+          </div>
+        </div>
+
+        <div style={{ padding:'26px 30px' }}>
+          {/* goal + progress */}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end', gap:16, marginBottom:10, flexWrap:'wrap' }}>
+            <div>
+              <div style={{ fontSize:11, color:C.ink4, marginBottom:4 }}>目標</div>
+              <div style={{ fontSize:18, fontWeight:700, color:C.ink7 }}>{data.goal || '—'}</div>
+            </div>
+            {days !== null && (
+              <div style={{ textAlign:'right' }}>
+                <div style={{ fontSize:10.5, color:C.ink4 }}>達成まで</div>
+                <div style={mono({ color:C.ink7, lineHeight:1 })}><span style={{ fontSize:30, fontWeight:500 }}>{days}</span><span style={{ fontSize:13, marginLeft:3 }}>日</span></div>
+                <div style={{ fontSize:10.5, color:C.ink4 }}>{fmtFull(data.target)}</div>
+              </div>
+            )}
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:26 }}>
+            <div style={{ flex:1, height:6, background:'#f0efec', borderRadius:99, overflow:'hidden' }}><div style={{ height:'100%', width:`${data.overall}%`, background:C.ink7, borderRadius:99 }}/></div>
+            <span style={mono({ fontSize:13, color:C.ink7 })}>{data.overall}%</span>
+          </div>
+
+          {/* stats */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:26 }}>
+            {[
+              { v:`${data.hours}h`, l:'累計学習' },
+              { v:`${data.days}日`, l:'学習日数' },
+              { v:`${data.streak}日`, l:'連続学習' },
+              { v:`${data.msDone}/${data.milestones.length}`, l:'完了段階' },
+            ].map(s => (
+              <div key={s.l} style={{ border:`0.5px solid ${C.ink2}`, borderRadius:4, padding:'13px 12px', textAlign:'center' }}>
+                <div style={mono({ fontSize:18, fontWeight:500, color:C.ink7, marginBottom:3 })}>{s.v}</div>
+                <div style={{ fontSize:10, color:C.ink4 }}>{s.l}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* milestones */}
+          <div style={{ fontSize:12, fontWeight:700, color:C.ink7, marginBottom:12 }}>ロードマップ</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:data.subjects.length?24:8 }}>
+            {data.milestones.map((m,i) => (
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:12 }}>
+                <span style={mono({ fontSize:11, color:C.ink4, width:20, flexShrink:0 })}>{pad2(i+1)}</span>
+                <span style={{ fontSize:12.5, color:m.s==='未着手'?C.ink4:C.ink6, flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.n}</span>
+                <span style={{ fontSize:10, padding:'2px 9px', borderRadius:99, flexShrink:0, ...statusBadge(m.s, false, i) }}>{m.s}</span>
+                <span style={mono({ fontSize:11, color:C.ink5, width:36, textAlign:'right', flexShrink:0 })}>{m.p}%</span>
+              </div>
+            ))}
+          </div>
+
+          {/* subjects */}
+          {data.subjects.length > 0 && (
+            <>
+              <div style={{ fontSize:12, fontWeight:700, color:C.ink7, marginBottom:12 }}>学習科目の内訳</div>
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                {data.subjects.map(s => {
+                  const pct = Math.round(s.h/subjTotal*100);
+                  return (
+                    <div key={s.n}>
+                      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
+                        <span style={{ fontSize:12.5, color:C.ink6 }}>{s.n}</span>
+                        <span style={mono({ fontSize:11, color:C.ink5 })}>{s.h}h</span>
+                      </div>
+                      <div style={{ height:5, background:'#f0efec', borderRadius:99, overflow:'hidden' }}><div style={{ height:'100%', width:`${pct}%`, background:C.ink5, borderRadius:99 }}/></div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* footer */}
+        <div style={{ borderTop:`0.5px solid ${C.ink2}`, padding:'18px 30px', display:'flex', gap:10, flexWrap:'wrap', alignItems:'center' }}>
+          {own ? (
+            <>
+              <Btn variant="primary" onClick={() => copyText(shareURL(data), '共有リンクをコピーしました')}>共有リンクをコピー</Btn>
+              <Btn variant="secondary" onClick={() => copyText(shareText(data), 'サマリーをコピーしました')}>テキストでコピー</Btn>
+              <Btn variant="ghost" style={{ marginLeft:'auto' }} onClick={onClose}>閉じる</Btn>
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize:11.5, color:C.ink4, flex:1, lineHeight:1.6 }}>これは共有されたキャリアサマリーです。あなたも自分の学習計画を作れます。</span>
+              <Btn variant="primary" onClick={onClose}>自分のCompassを作る →</Btn>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // App root
 // ═══════════════════════════════════════════════════════════════════════════
 function App() {
@@ -1626,6 +1807,20 @@ function App() {
   useEffect(() => { saveState(state); }, [state]);
 
   const stats = useMemo(() => computeStats(state), [state]);
+
+  // shared-summary view (read-only) when opened via #share=...
+  const [sharedView, setSharedView] = useState(() => {
+    try {
+      const h = location.hash || '';
+      if (h.indexOf('#share=') === 0) return JSON.parse(b64decode(h.slice(7)));
+    } catch (e) {}
+    return null;
+  });
+  function closeShared() {
+    history.replaceState(null, '', location.pathname + location.search);
+    setSharedView(null);
+    window.scrollTo(0,0);
+  }
 
   const step = state.setupStep || 'welcome';
   function setStep(s) { dispatch({ type:'setSetupStep', step:s }); window.scrollTo(0,0); }
@@ -1654,6 +1849,7 @@ function App() {
     <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', background:'#f5f5f4' }}>
       <TopBar/>
       <main style={{ flex:1 }}>{body}</main>
+      {sharedView && <SummaryCard data={sharedView} own={false} onClose={closeShared}/>}
     </div>
   );
 }

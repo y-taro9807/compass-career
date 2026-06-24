@@ -78,6 +78,43 @@ function addDays(d, n) {
 }
 const round1 = n => Math.round(n * 10) / 10;
 
+// utf-8 safe base64 (for shareable links)
+function b64encode(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin);
+}
+function b64decode(b64) {
+  const bin = atob(b64);
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+function copyText(text, okMsg) {
+  const ok = () => {
+    if (okMsg) alert(okMsg);
+  };
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+      document.execCommand('copy');
+      ok();
+    } catch (e) {
+      alert('コピーできませんでした');
+    }
+    ta.remove();
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(ok).catch(fallback);
+  } else fallback();
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // diagnosis fixed data
 // ═══════════════════════════════════════════════════════════════════════════
@@ -4785,6 +4822,7 @@ function Dashboard({
   onWipe
 }) {
   const [tab, setTab] = useState('dashboard');
+  const [showSummary, setShowSummary] = useState(false);
   const days = daysUntil(state.goal.targetDate);
   const typeName = (state.diagnosis.resultType || 'T') + '型キャリア';
   const TABS = [{
@@ -4858,7 +4896,17 @@ function Dashboard({
       fontSize: 12,
       color: C.ink4
     }
-  }, state.profile.name, " さん")), /*#__PURE__*/React.createElement("h1", {
+  }, state.profile.name, " さん"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowSummary(true),
+    style: {
+      background: 'none',
+      border: `0.5px solid ${C.ink3}`,
+      borderRadius: 3,
+      fontSize: 11,
+      color: C.ink5,
+      padding: '4px 11px'
+    }
+  }, "共有")), /*#__PURE__*/React.createElement("h1", {
     style: {
       fontSize: 26,
       fontWeight: 700,
@@ -4945,7 +4993,11 @@ function Dashboard({
     dispatch: dispatch,
     onRestart: onRestart,
     onWipe: onWipe
-  })));
+  })), showSummary && /*#__PURE__*/React.createElement(SummaryCard, {
+    data: buildShareData(state, stats),
+    own: true,
+    onClose: () => setShowSummary(false)
+  }));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -5180,6 +5232,405 @@ function reducer(state, action) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Shareable career summary card
+// ═══════════════════════════════════════════════════════════════════════════
+function buildShareData(state, stats) {
+  return {
+    v: 1,
+    name: state.profile.name || '',
+    type: state.diagnosis.resultType || '',
+    field: state.profile.field || '',
+    spec: state.profile.specialty || '',
+    role: state.profile.role || '',
+    goal: state.goal.title || '',
+    target: state.goal.targetDate || '',
+    overall: stats.overallPct,
+    hours: stats.totalHours,
+    days: stats.studyDays,
+    streak: stats.streak,
+    msDone: stats.milestones.filter(m => m.status === '完了').length,
+    subjects: stats.subjectTotals.slice(0, 4).map(s => ({
+      n: s.name,
+      h: s.h
+    })),
+    milestones: stats.milestones.map(m => ({
+      n: m.name,
+      p: m.pct,
+      s: m.status
+    }))
+  };
+}
+function shareURL(data) {
+  return location.origin + location.pathname + '#share=' + b64encode(JSON.stringify(data));
+}
+function shareText(data) {
+  const lines = ['【Compass キャリアサマリー】', data.name ? `名前：${data.name}` : null, specLabel(data.field, data.spec) ? `分野：${specLabel(data.field, data.spec)}` : null, data.role ? `立場：${data.role}` : null, data.goal ? `目標：${data.goal}${data.target ? `（${fmtFull(data.target)}）` : ''}` : null, `進捗：${data.overall}%（完了マイルストーン ${data.msDone}/${data.milestones.length}）`, `学習：累計${data.hours}h ／ ${data.days}日 ／ 連続${data.streak}日`, '', 'ロードマップ：', ...data.milestones.map((m, i) => `${pad2(i + 1)} [${m.s}] ${m.n}（${m.p}%）`)];
+  return lines.filter(l => l !== null).join('\n');
+}
+function SummaryCard({
+  data,
+  own,
+  onClose
+}) {
+  const sl = specLabel(data.field, data.spec);
+  const days = data.target ? daysUntil(data.target) : null;
+  const subjTotal = data.subjects.reduce((a, s) => a + s.h, 0) || 1;
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(20,20,19,.5)',
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'center',
+      padding: '5vh 16px 40px',
+      zIndex: 60,
+      overflowY: 'auto'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "modal-card",
+    style: {
+      background: C.ink0,
+      borderRadius: 6,
+      width: '100%',
+      maxWidth: 680,
+      boxShadow: '0 12px 40px rgba(0,0,0,.18)',
+      overflow: 'hidden'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.ink7,
+      padding: '26px 30px'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 9,
+      marginBottom: 18
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 11,
+      height: 11,
+      border: `1.5px solid ${C.ink0}`,
+      borderRadius: 99,
+      display: 'inline-block'
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.ink0,
+      fontSize: 11,
+      letterSpacing: '.24em',
+      fontWeight: 500
+    }
+  }, "COMPASS"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.ink4,
+      fontSize: 10.5,
+      letterSpacing: '.05em'
+    }
+  }, "キャリアサマリー")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 24,
+      fontWeight: 700,
+      color: C.ink0,
+      marginBottom: 12
+    }
+  }, data.name || '名称未設定', " ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14,
+      color: C.ink4,
+      fontWeight: 400
+    }
+  }, "さんのキャリア")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 8
+    }
+  }, data.type && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: C.ink7,
+      background: C.ink0,
+      padding: '4px 11px',
+      borderRadius: 99,
+      fontWeight: 500
+    }
+  }, data.type, "型キャリア"), sl && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: C.ink2,
+      border: '0.5px solid rgba(255,255,255,.3)',
+      padding: '4px 11px',
+      borderRadius: 99
+    }
+  }, sl), data.role && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: C.ink2,
+      border: '0.5px solid rgba(255,255,255,.3)',
+      padding: '4px 11px',
+      borderRadius: 99
+    }
+  }, data.role))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '26px 30px'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
+      gap: 16,
+      marginBottom: 10,
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: C.ink4,
+      marginBottom: 4
+    }
+  }, "目標"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 18,
+      fontWeight: 700,
+      color: C.ink7
+    }
+  }, data.goal || '—')), days !== null && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: 'right'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10.5,
+      color: C.ink4
+    }
+  }, "達成まで"), /*#__PURE__*/React.createElement("div", {
+    style: mono({
+      color: C.ink7,
+      lineHeight: 1
+    })
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 30,
+      fontWeight: 500
+    }
+  }, days), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      marginLeft: 3
+    }
+  }, "日")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10.5,
+      color: C.ink4
+    }
+  }, fmtFull(data.target)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      marginBottom: 26
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      height: 6,
+      background: '#f0efec',
+      borderRadius: 99,
+      overflow: 'hidden'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: '100%',
+      width: `${data.overall}%`,
+      background: C.ink7,
+      borderRadius: 99
+    }
+  })), /*#__PURE__*/React.createElement("span", {
+    style: mono({
+      fontSize: 13,
+      color: C.ink7
+    })
+  }, data.overall, "%")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(4,1fr)',
+      gap: 10,
+      marginBottom: 26
+    }
+  }, [{
+    v: `${data.hours}h`,
+    l: '累計学習'
+  }, {
+    v: `${data.days}日`,
+    l: '学習日数'
+  }, {
+    v: `${data.streak}日`,
+    l: '連続学習'
+  }, {
+    v: `${data.msDone}/${data.milestones.length}`,
+    l: '完了段階'
+  }].map(s => /*#__PURE__*/React.createElement("div", {
+    key: s.l,
+    style: {
+      border: `0.5px solid ${C.ink2}`,
+      borderRadius: 4,
+      padding: '13px 12px',
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: mono({
+      fontSize: 18,
+      fontWeight: 500,
+      color: C.ink7,
+      marginBottom: 3
+    })
+  }, s.v), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: C.ink4
+    }
+  }, s.l)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700,
+      color: C.ink7,
+      marginBottom: 12
+    }
+  }, "ロードマップ"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8,
+      marginBottom: data.subjects.length ? 24 : 8
+    }
+  }, data.milestones.map((m, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: mono({
+      fontSize: 11,
+      color: C.ink4,
+      width: 20,
+      flexShrink: 0
+    })
+  }, pad2(i + 1)), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12.5,
+      color: m.s === '未着手' ? C.ink4 : C.ink6,
+      flex: 1,
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap'
+    }
+  }, m.n), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10,
+      padding: '2px 9px',
+      borderRadius: 99,
+      flexShrink: 0,
+      ...statusBadge(m.s, false, i)
+    }
+  }, m.s), /*#__PURE__*/React.createElement("span", {
+    style: mono({
+      fontSize: 11,
+      color: C.ink5,
+      width: 36,
+      textAlign: 'right',
+      flexShrink: 0
+    })
+  }, m.p, "%")))), data.subjects.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700,
+      color: C.ink7,
+      marginBottom: 12
+    }
+  }, "学習科目の内訳"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 10
+    }
+  }, data.subjects.map(s => {
+    const pct = Math.round(s.h / subjTotal * 100);
+    return /*#__PURE__*/React.createElement("div", {
+      key: s.n
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        marginBottom: 5
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12.5,
+        color: C.ink6
+      }
+    }, s.n), /*#__PURE__*/React.createElement("span", {
+      style: mono({
+        fontSize: 11,
+        color: C.ink5
+      })
+    }, s.h, "h")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: 5,
+        background: '#f0efec',
+        borderRadius: 99,
+        overflow: 'hidden'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: '100%',
+        width: `${pct}%`,
+        background: C.ink5,
+        borderRadius: 99
+      }
+    })));
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderTop: `0.5px solid ${C.ink2}`,
+      padding: '18px 30px',
+      display: 'flex',
+      gap: 10,
+      flexWrap: 'wrap',
+      alignItems: 'center'
+    }
+  }, own ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Btn, {
+    variant: "primary",
+    onClick: () => copyText(shareURL(data), '共有リンクをコピーしました')
+  }, "共有リンクをコピー"), /*#__PURE__*/React.createElement(Btn, {
+    variant: "secondary",
+    onClick: () => copyText(shareText(data), 'サマリーをコピーしました')
+  }, "テキストでコピー"), /*#__PURE__*/React.createElement(Btn, {
+    variant: "ghost",
+    style: {
+      marginLeft: 'auto'
+    },
+    onClick: onClose
+  }, "閉じる")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11.5,
+      color: C.ink4,
+      flex: 1,
+      lineHeight: 1.6
+    }
+  }, "これは共有されたキャリアサマリーです。あなたも自分の学習計画を作れます。"), /*#__PURE__*/React.createElement(Btn, {
+    variant: "primary",
+    onClick: onClose
+  }, "自分のCompassを作る →")))));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // App root
 // ═══════════════════════════════════════════════════════════════════════════
 function App() {
@@ -5189,6 +5640,20 @@ function App() {
     saveState(state);
   }, [state]);
   const stats = useMemo(() => computeStats(state), [state]);
+
+  // shared-summary view (read-only) when opened via #share=...
+  const [sharedView, setSharedView] = useState(() => {
+    try {
+      const h = location.hash || '';
+      if (h.indexOf('#share=') === 0) return JSON.parse(b64decode(h.slice(7)));
+    } catch (e) {}
+    return null;
+  });
+  function closeShared() {
+    history.replaceState(null, '', location.pathname + location.search);
+    setSharedView(null);
+    window.scrollTo(0, 0);
+  }
   const step = state.setupStep || 'welcome';
   function setStep(s) {
     dispatch({
@@ -5282,6 +5747,10 @@ function App() {
     style: {
       flex: 1
     }
-  }, body));
+  }, body), sharedView && /*#__PURE__*/React.createElement(SummaryCard, {
+    data: sharedView,
+    own: false,
+    onClose: closeShared
+  }));
 }
 ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));
